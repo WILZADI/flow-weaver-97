@@ -1,20 +1,72 @@
+import { useState } from 'react';
 import { TrendingUp, TrendingDown, Wallet, Clock } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { CashFlowChart } from '@/components/dashboard/CashFlowChart';
 import { PendingCard } from '@/components/dashboard/PendingCard';
+import { MonthYearSelector } from '@/components/shared/MonthYearSelector';
 import { useFinance } from '@/contexts/FinanceContext';
 
+const MONTHS = [
+  'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+  'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
+];
+
 export default function DashboardPage() {
-  const { summary } = useFinance();
+  const { 
+    selectedMonth, 
+    selectedYear, 
+    setSelectedMonth, 
+    setSelectedYear,
+    getMonthSummary,
+    getYearSummary,
+    getFilteredTransactions 
+  } = useFinance();
+  
+  const [showAllMonths, setShowAllMonths] = useState(false);
+  
+  const summary = showAllMonths 
+    ? getYearSummary(selectedYear) 
+    : getMonthSummary(selectedMonth, selectedYear);
+
+  // Generate monthly data for the chart based on selected year
+  const monthlyChartData = MONTHS.map((month, index) => {
+    const monthSummary = getMonthSummary(index, selectedYear);
+    return {
+      month,
+      income: monthSummary.totalIncome,
+      expenses: monthSummary.totalExpenses,
+      balance: monthSummary.netBalance,
+    };
+  });
+
+  // Get pending transactions for current filter
+  const pendingTransactions = showAllMonths
+    ? getFilteredTransactions(undefined, selectedYear).filter(t => t.isPending)
+    : getFilteredTransactions(selectedMonth, selectedYear).filter(t => t.isPending);
 
   return (
     <AppLayout>
       <div className="p-6 lg:p-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Vista general de tus finanzas</p>
+        {/* Header with Month Selector */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-muted-foreground mt-1">
+              {showAllMonths 
+                ? `Resumen anual ${selectedYear}` 
+                : `Vista de ${MONTHS[selectedMonth]} ${selectedYear}`}
+            </p>
+          </div>
+          <MonthYearSelector
+            month={selectedMonth}
+            year={selectedYear}
+            onMonthChange={setSelectedMonth}
+            onYearChange={setSelectedYear}
+            showAllOption
+            isAllMonths={showAllMonths}
+            onToggleAllMonths={setShowAllMonths}
+          />
         </div>
 
         {/* KPI Cards */}
@@ -24,7 +76,6 @@ export default function DashboardPage() {
             value={summary.totalIncome}
             icon={TrendingUp}
             variant="income"
-            trend={{ value: 12.5, isPositive: true }}
             delay={0}
           />
           <KPICard
@@ -32,7 +83,6 @@ export default function DashboardPage() {
             value={summary.totalExpenses}
             icon={TrendingDown}
             variant="expense"
-            trend={{ value: 8.2, isPositive: false }}
             delay={0.1}
           />
           <KPICard
@@ -54,9 +104,9 @@ export default function DashboardPage() {
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <CashFlowChart />
+            <CashFlowChart data={monthlyChartData} selectedMonth={showAllMonths ? undefined : selectedMonth} />
           </div>
-          <PendingCard />
+          <PendingCard transactions={pendingTransactions} />
         </div>
       </div>
     </AppLayout>

@@ -9,8 +9,20 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  Cell,
 } from 'recharts';
-import { monthlyData } from '@/data/mockData';
+
+interface MonthlyData {
+  month: string;
+  income: number;
+  expenses: number;
+  balance: number;
+}
+
+interface CashFlowChartProps {
+  data: MonthlyData[];
+  selectedMonth?: number;
+}
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -35,7 +47,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export function CashFlowChart() {
+export function CashFlowChart({ data, selectedMonth }: CashFlowChartProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -46,7 +58,7 @@ export function CashFlowChart() {
       <h3 className="text-lg font-semibold text-foreground mb-6">Flujo de Efectivo Mensual</h3>
       <div className="h-[350px]">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <ComposedChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(217, 33%, 17%)" vertical={false} />
             <XAxis 
               dataKey="month" 
@@ -68,17 +80,31 @@ export function CashFlowChart() {
             <Bar 
               dataKey="income" 
               name="Ingresos" 
-              fill="hsl(142, 76%, 36%)" 
               radius={[4, 4, 0, 0]}
               barSize={24}
-            />
+            >
+              {data.map((_, index) => (
+                <Cell 
+                  key={`income-${index}`}
+                  fill={selectedMonth === index ? 'hsl(142, 76%, 46%)' : 'hsl(142, 76%, 36%)'}
+                  opacity={selectedMonth !== undefined && selectedMonth !== index ? 0.4 : 1}
+                />
+              ))}
+            </Bar>
             <Bar 
               dataKey="expenses" 
               name="Gastos" 
-              fill="hsl(0, 72%, 51%)" 
               radius={[4, 4, 0, 0]}
               barSize={24}
-            />
+            >
+              {data.map((_, index) => (
+                <Cell 
+                  key={`expense-${index}`}
+                  fill={selectedMonth === index ? 'hsl(0, 72%, 61%)' : 'hsl(0, 72%, 51%)'}
+                  opacity={selectedMonth !== undefined && selectedMonth !== index ? 0.4 : 1}
+                />
+              ))}
+            </Bar>
             <Line 
               type="monotone" 
               dataKey="balance" 

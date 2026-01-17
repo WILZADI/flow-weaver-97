@@ -13,6 +13,7 @@ import {
   Clock
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { MonthYearSelector } from '@/components/shared/MonthYearSelector';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useFinance } from '@/contexts/FinanceContext';
 import { Button } from '@/components/ui/button';
@@ -44,13 +45,25 @@ import { Transaction } from '@/types/finance';
 import { LinkExpenseModal } from '@/components/transactions/LinkExpenseModal';
 
 export default function TransactionsPage() {
-  const { transactions, addTransaction, deleteTransaction, togglePending } = useFinance();
+  const { 
+    transactions, 
+    addTransaction, 
+    deleteTransaction, 
+    togglePending,
+    selectedMonth,
+    selectedYear,
+    setSelectedMonth,
+    setSelectedYear,
+    getFilteredTransactions 
+  } = useFinance();
+  
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Transaction | null>(null);
+  const [showAllMonths, setShowAllMonths] = useState(false);
   const [newTransaction, setNewTransaction] = useState({
     type: 'expense' as 'income' | 'expense',
     amount: '',
@@ -64,7 +77,12 @@ export default function TransactionsPage() {
     setLinkModalOpen(true);
   };
 
-  const filteredTransactions = transactions.filter(t => {
+  // Get transactions filtered by month/year
+  const monthFilteredTransactions = showAllMonths 
+    ? getFilteredTransactions(undefined, selectedYear)
+    : getFilteredTransactions(selectedMonth, selectedYear);
+
+  const filteredTransactions = monthFilteredTransactions.filter(t => {
     const matchesSearch = t.description.toLowerCase().includes(search.toLowerCase()) ||
       t.category.toLowerCase().includes(search.toLowerCase());
     const matchesType = typeFilter === 'all' || t.type === typeFilter;
@@ -109,100 +127,113 @@ export default function TransactionsPage() {
     <AppLayout>
       <div className="p-6 lg:p-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Movimientos</h1>
-            <p className="text-muted-foreground mt-1">Gestiona tus ingresos y gastos</p>
-          </div>
-          
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2 bg-primary hover:bg-primary/90">
-                <Plus className="w-5 h-5" />
-                Nueva Transacción
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md bg-card border-border">
-              <DialogHeader>
-                <DialogTitle>Nueva Transacción</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 mt-4">
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={newTransaction.type === 'income' ? 'default' : 'outline'}
-                    className={cn(
-                      "flex-1",
-                      newTransaction.type === 'income' && "bg-income hover:bg-income/90"
-                    )}
-                    onClick={() => setNewTransaction(prev => ({ ...prev, type: 'income' }))}
+        <div className="flex flex-col gap-4 mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Movimientos</h1>
+              <p className="text-muted-foreground mt-1">Gestiona tus ingresos y gastos</p>
+            </div>
+            
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2 bg-primary hover:bg-primary/90">
+                  <Plus className="w-5 h-5" />
+                  Nueva Transacción
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md bg-card border-border">
+                <DialogHeader>
+                  <DialogTitle>Nueva Transacción</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 mt-4">
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={newTransaction.type === 'income' ? 'default' : 'outline'}
+                      className={cn(
+                        "flex-1",
+                        newTransaction.type === 'income' && "bg-income hover:bg-income/90"
+                      )}
+                      onClick={() => setNewTransaction(prev => ({ ...prev, type: 'income' }))}
+                    >
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      Ingreso
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={newTransaction.type === 'expense' ? 'default' : 'outline'}
+                      className={cn(
+                        "flex-1",
+                        newTransaction.type === 'expense' && "bg-expense hover:bg-expense/90"
+                      )}
+                      onClick={() => setNewTransaction(prev => ({ ...prev, type: 'expense' }))}
+                    >
+                      <TrendingDown className="w-4 h-4 mr-2" />
+                      Gasto
+                    </Button>
+                  </div>
+
+                  <Input
+                    type="number"
+                    placeholder="Monto"
+                    value={newTransaction.amount}
+                    onChange={(e) => setNewTransaction(prev => ({ ...prev, amount: e.target.value }))}
+                    className="h-12"
+                  />
+
+                  <Input
+                    placeholder="Descripción"
+                    value={newTransaction.description}
+                    onChange={(e) => setNewTransaction(prev => ({ ...prev, description: e.target.value }))}
+                    className="h-12"
+                  />
+
+                  <Select
+                    value={newTransaction.category}
+                    onValueChange={(value) => setNewTransaction(prev => ({ ...prev, category: value }))}
                   >
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    Ingreso
-                  </Button>
+                    <SelectTrigger className="h-12">
+                      <SelectValue placeholder="Categoría" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories
+                        .filter(c => c.type === newTransaction.type)
+                        .map(category => (
+                          <SelectItem key={category.id} value={category.name}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Input
+                    type="date"
+                    value={newTransaction.date}
+                    onChange={(e) => setNewTransaction(prev => ({ ...prev, date: e.target.value }))}
+                    className="h-12"
+                  />
+
                   <Button
-                    type="button"
-                    variant={newTransaction.type === 'expense' ? 'default' : 'outline'}
-                    className={cn(
-                      "flex-1",
-                      newTransaction.type === 'expense' && "bg-expense hover:bg-expense/90"
-                    )}
-                    onClick={() => setNewTransaction(prev => ({ ...prev, type: 'expense' }))}
+                    onClick={handleAddTransaction}
+                    className="w-full h-12 bg-primary hover:bg-primary/90"
                   >
-                    <TrendingDown className="w-4 h-4 mr-2" />
-                    Gasto
+                    Guardar Transacción
                   </Button>
                 </div>
+              </DialogContent>
+            </Dialog>
+          </div>
 
-                <Input
-                  type="number"
-                  placeholder="Monto"
-                  value={newTransaction.amount}
-                  onChange={(e) => setNewTransaction(prev => ({ ...prev, amount: e.target.value }))}
-                  className="h-12"
-                />
-
-                <Input
-                  placeholder="Descripción"
-                  value={newTransaction.description}
-                  onChange={(e) => setNewTransaction(prev => ({ ...prev, description: e.target.value }))}
-                  className="h-12"
-                />
-
-                <Select
-                  value={newTransaction.category}
-                  onValueChange={(value) => setNewTransaction(prev => ({ ...prev, category: value }))}
-                >
-                  <SelectTrigger className="h-12">
-                    <SelectValue placeholder="Categoría" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories
-                      .filter(c => c.type === newTransaction.type)
-                      .map(category => (
-                        <SelectItem key={category.id} value={category.name}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-
-                <Input
-                  type="date"
-                  value={newTransaction.date}
-                  onChange={(e) => setNewTransaction(prev => ({ ...prev, date: e.target.value }))}
-                  className="h-12"
-                />
-
-                <Button
-                  onClick={handleAddTransaction}
-                  className="w-full h-12 bg-primary hover:bg-primary/90"
-                >
-                  Guardar Transacción
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          {/* Month Year Selector */}
+          <MonthYearSelector
+            month={selectedMonth}
+            year={selectedYear}
+            onMonthChange={setSelectedMonth}
+            onYearChange={setSelectedYear}
+            showAllOption
+            isAllMonths={showAllMonths}
+            onToggleAllMonths={setShowAllMonths}
+          />
         </div>
 
         {/* Filters */}
