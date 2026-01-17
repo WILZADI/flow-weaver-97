@@ -12,6 +12,7 @@ import {
   Edit,
   Clock
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useFinance } from '@/contexts/FinanceContext';
 import { Button } from '@/components/ui/button';
@@ -278,9 +279,28 @@ export default function TransactionsPage() {
                         <div>
                           <p className="font-medium text-foreground">{transaction.description}</p>
                           {transaction.linkedIncomeIds && transaction.linkedIncomeIds.length > 0 && (
-                            <span className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                              <Link2 className="w-3 h-3" /> Vinculado
-                            </span>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs cursor-help">
+                                  <Link2 className="w-3 h-3" /> 
+                                  {transaction.linkedIncomeIds.length} ingreso{transaction.linkedIncomeIds.length > 1 ? 's' : ''}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom" className="max-w-xs">
+                                <p className="font-medium mb-1">Fuentes de ingreso:</p>
+                                <ul className="space-y-1">
+                                  {transaction.linkedIncomeIds.map(id => {
+                                    const income = transactions.find(t => t.id === id);
+                                    return income ? (
+                                      <li key={id} className="flex items-center justify-between gap-3 text-xs">
+                                        <span>{income.description}</span>
+                                        <span className="text-income font-medium">+${income.amount.toLocaleString()}</span>
+                                      </li>
+                                    ) : null;
+                                  })}
+                                </ul>
+                              </TooltipContent>
+                            </Tooltip>
                           )}
                         </div>
                       </div>
@@ -369,6 +389,30 @@ export default function TransactionsPage() {
                     <div>
                       <p className="font-medium text-foreground">{transaction.description}</p>
                       <p className="text-sm text-muted-foreground">{transaction.category}</p>
+                      {transaction.linkedIncomeIds && transaction.linkedIncomeIds.length > 0 && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs cursor-help">
+                              <Link2 className="w-3 h-3" /> 
+                              {transaction.linkedIncomeIds.length} ingreso{transaction.linkedIncomeIds.length > 1 ? 's' : ''}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="max-w-xs">
+                            <p className="font-medium mb-1">Fuentes de ingreso:</p>
+                            <ul className="space-y-1">
+                              {transaction.linkedIncomeIds.map(id => {
+                                const income = transactions.find(t => t.id === id);
+                                return income ? (
+                                  <li key={id} className="flex items-center justify-between gap-3 text-xs">
+                                    <span>{income.description}</span>
+                                    <span className="text-income font-medium">+${income.amount.toLocaleString()}</span>
+                                  </li>
+                                ) : null;
+                              })}
+                            </ul>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                     </div>
                   </div>
                   <DropdownMenu>
