@@ -27,7 +27,8 @@ export function LinkExpenseModal({ expense, open, onOpenChange }: LinkExpenseMod
     expense?.linkedIncomeIds || []
   );
 
-  const incomes = transactions.filter(t => t.type === 'income');
+  // Solo mostrar ingresos creados por el usuario (no datos de ejemplo)
+  const incomes = transactions.filter(t => t.type === 'income' && t.isUserCreated === true);
 
   const toggleIncome = (incomeId: string) => {
     setSelectedIncomes(prev =>

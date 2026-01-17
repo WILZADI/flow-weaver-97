@@ -7,6 +7,7 @@ export interface Transaction {
   date: string;
   isPending: boolean;
   linkedIncomeIds?: string[];
+  isUserCreated?: boolean;
 }
 
 export interface Category {
