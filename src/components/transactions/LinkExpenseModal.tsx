@@ -13,6 +13,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Transaction } from '@/types/finance';
+import { formatCurrency } from '@/lib/currency';
 
 interface LinkExpenseModalProps {
   expense: Transaction | null;
@@ -63,7 +64,7 @@ export function LinkExpenseModal({ expense, open, onOpenChange }: LinkExpenseMod
             <div className="p-4 rounded-lg bg-expense/10 border border-expense/20">
               <p className="text-sm text-muted-foreground">Gasto a vincular:</p>
               <p className="font-semibold text-foreground">{expense.description}</p>
-              <p className="text-expense font-bold text-lg">-${expense.amount.toLocaleString()}</p>
+              <p className="text-expense font-bold text-lg">-{formatCurrency(expense.amount)}</p>
             </div>
 
             {/* Income selector */}
@@ -100,7 +101,7 @@ export function LinkExpenseModal({ expense, open, onOpenChange }: LinkExpenseMod
                           <p className="text-sm text-muted-foreground">{income.category}</p>
                         </div>
                         <span className="text-income font-bold">
-                          +${income.amount.toLocaleString()}
+                          +{formatCurrency(income.amount)}
                         </span>
                       </button>
                     );
@@ -114,7 +115,7 @@ export function LinkExpenseModal({ expense, open, onOpenChange }: LinkExpenseMod
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Total vinculado:</span>
                 <span className="text-income font-bold text-lg">
-                  ${totalLinked.toLocaleString()}
+                  {formatCurrency(totalLinked)}
                 </span>
               </div>
               <div className="flex justify-between items-center mt-1">

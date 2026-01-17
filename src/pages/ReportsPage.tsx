@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   PieChart,
@@ -14,7 +14,36 @@ import {
 } from 'recharts';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { monthlyData, categoryExpenseData } from '@/data/mockData';
+import { MonthYearSelector } from '@/components/shared/MonthYearSelector';
+import { useFinance } from '@/contexts/FinanceContext';
+import { formatCurrency, formatCompactCurrency } from '@/lib/currency';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+const MONTHS = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+];
+
+const MONTH_ABBREVIATIONS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+const CATEGORY_COLORS: Record<string, string> = {
+  'Casa': 'hsl(0, 72%, 51%)',
+  'Colegio': 'hsl(263, 70%, 50%)',
+  'Servicios': 'hsl(217, 91%, 60%)',
+  'Celular': 'hsl(340, 82%, 52%)',
+  'Créditos': 'hsl(142, 76%, 36%)',
+  'Otros': 'hsl(25, 95%, 53%)',
+  'Finca': 'hsl(45, 93%, 47%)',
+  'Transporte': 'hsl(180, 70%, 45%)',
+};
+
+const YEARS = [2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035];
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
@@ -22,7 +51,7 @@ const CustomTooltip = ({ active, payload }: any) => {
       <div className="glass rounded-lg p-3 border border-border shadow-xl">
         <p className="text-sm font-semibold text-foreground">{payload[0].name}</p>
         <p className="text-sm text-muted-foreground">
-          ${payload[0].value.toLocaleString()}
+          {formatCurrency(payload[0].value)}
         </p>
       </div>
     );
@@ -30,16 +59,55 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-const annualSavingsData = monthlyData.map((item, index) => ({
-  ...item,
-  savingsRate: Math.round((item.balance / item.income) * 100),
-  cumulativeSavings: monthlyData.slice(0, index + 1).reduce((acc, curr) => acc + curr.balance, 0),
-}));
-
 export default function ReportsPage() {
+  const { getFilteredTransactions, getMonthSummary, getYearSummary } = useFinance();
+  
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [reportMonth, setReportMonth] = useState<number>(new Date().getMonth());
+  const [reportYear, setReportYear] = useState<number>(new Date().getFullYear());
+  const [annualReportYear, setAnnualReportYear] = useState<number>(new Date().getFullYear());
 
-  const totalExpenses = categoryExpenseData.reduce((sum, cat) => sum + cat.value, 0);
+  // Monthly category data
+  const monthlyCategoryData = useMemo(() => {
+    const transactions = getFilteredTransactions(reportMonth, reportYear);
+    const expenses = transactions.filter(t => t.type === 'expense');
+    
+    const categoryTotals: Record<string, number> = {};
+    expenses.forEach(expense => {
+      categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
+    });
+    
+    return Object.entries(categoryTotals).map(([name, value]) => ({
+      name,
+      value,
+      color: CATEGORY_COLORS[name] || 'hsl(200, 70%, 50%)',
+    }));
+  }, [getFilteredTransactions, reportMonth, reportYear]);
+
+  const totalExpenses = monthlyCategoryData.reduce((sum, cat) => sum + cat.value, 0);
+  const monthSummary = getMonthSummary(reportMonth, reportYear);
+
+  // Annual data
+  const annualSavingsData = useMemo(() => {
+    let cumulative = 0;
+    return MONTH_ABBREVIATIONS.map((month, index) => {
+      const summary = getMonthSummary(index, annualReportYear);
+      cumulative += summary.netBalance;
+      return {
+        month,
+        income: summary.totalIncome,
+        expenses: summary.totalExpenses,
+        balance: summary.netBalance,
+        savingsRate: summary.totalIncome > 0 ? Math.round((summary.netBalance / summary.totalIncome) * 100) : 0,
+        cumulativeSavings: cumulative,
+      };
+    });
+  }, [getMonthSummary, annualReportYear]);
+
+  const yearSummary = getYearSummary(annualReportYear);
+  const annualSavingsRate = yearSummary.totalIncome > 0 
+    ? Math.round((yearSummary.netBalance / yearSummary.totalIncome) * 100) 
+    : 0;
 
   return (
     <AppLayout>
@@ -58,6 +126,17 @@ export default function ReportsPage() {
 
           {/* Monthly Report */}
           <TabsContent value="monthly" className="space-y-6">
+            {/* Month Selector */}
+            <div className="flex items-center gap-4 flex-wrap">
+              <span className="text-sm text-muted-foreground">Reporte de:</span>
+              <MonthYearSelector
+                month={reportMonth}
+                year={reportYear}
+                onMonthChange={setReportMonth}
+                onYearChange={setReportYear}
+              />
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Donut Chart */}
               <motion.div
@@ -66,63 +145,69 @@ export default function ReportsPage() {
                 className="kpi-card"
               >
                 <h3 className="text-lg font-semibold text-foreground mb-6">
-                  Gastos por Categoría
+                  Gastos por Categoría - {MONTHS[reportMonth]} {reportYear}
                 </h3>
-                <div className="flex flex-col lg:flex-row items-center gap-8">
-                  <div className="h-[280px] w-full lg:w-1/2">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={categoryExpenseData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={70}
-                          outerRadius={100}
-                          paddingAngle={4}
-                          dataKey="value"
-                          onMouseEnter={(_, index) => setSelectedCategory(categoryExpenseData[index].name)}
+                {monthlyCategoryData.length > 0 ? (
+                  <div className="flex flex-col lg:flex-row items-center gap-8">
+                    <div className="h-[280px] w-full lg:w-1/2">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={monthlyCategoryData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={70}
+                            outerRadius={100}
+                            paddingAngle={4}
+                            dataKey="value"
+                            onMouseEnter={(_, index) => setSelectedCategory(monthlyCategoryData[index].name)}
+                            onMouseLeave={() => setSelectedCategory(null)}
+                          >
+                            {monthlyCategoryData.map((entry, index) => (
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={entry.color}
+                                opacity={selectedCategory === null || selectedCategory === entry.name ? 1 : 0.3}
+                                style={{ cursor: 'pointer', transition: 'opacity 0.2s' }}
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip content={<CustomTooltip />} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="flex-1 space-y-3">
+                      {monthlyCategoryData.map((category) => (
+                        <div 
+                          key={category.name}
+                          className="flex items-center justify-between p-3 rounded-lg hover:bg-accent/30 transition-colors cursor-pointer"
+                          onMouseEnter={() => setSelectedCategory(category.name)}
                           onMouseLeave={() => setSelectedCategory(null)}
                         >
-                          {categoryExpenseData.map((entry, index) => (
-                            <Cell 
-                              key={`cell-${index}`} 
-                              fill={entry.color}
-                              opacity={selectedCategory === null || selectedCategory === entry.name ? 1 : 0.3}
-                              style={{ cursor: 'pointer', transition: 'opacity 0.2s' }}
+                          <div className="flex items-center gap-3">
+                            <div 
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: category.color }}
                             />
-                          ))}
-                        </Pie>
-                        <Tooltip content={<CustomTooltip />} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex-1 space-y-3">
-                    {categoryExpenseData.map((category) => (
-                      <div 
-                        key={category.name}
-                        className="flex items-center justify-between p-3 rounded-lg hover:bg-accent/30 transition-colors cursor-pointer"
-                        onMouseEnter={() => setSelectedCategory(category.name)}
-                        onMouseLeave={() => setSelectedCategory(null)}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div 
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: category.color }}
-                          />
-                          <span className="text-sm text-foreground">{category.name}</span>
+                            <span className="text-sm text-foreground">{category.name}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-sm font-medium text-foreground">
+                              {formatCurrency(category.value)}
+                            </span>
+                            <span className="text-xs text-muted-foreground ml-2">
+                              ({totalExpenses > 0 ? Math.round((category.value / totalExpenses) * 100) : 0}%)
+                            </span>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <span className="text-sm font-medium text-foreground">
-                            ${category.value.toLocaleString()}
-                          </span>
-                          <span className="text-xs text-muted-foreground ml-2">
-                            ({Math.round((category.value / totalExpenses) * 100)}%)
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex items-center justify-center h-[280px] text-muted-foreground">
+                    No hay gastos registrados para este mes
+                  </div>
+                )}
               </motion.div>
 
               {/* Monthly Summary Cards */}
@@ -133,19 +218,21 @@ export default function ReportsPage() {
                 className="space-y-4"
               >
                 <div className="kpi-card-income">
-                  <p className="text-sm text-muted-foreground">Ingresos del Mes</p>
-                  <h3 className="text-3xl font-bold text-income mt-2">$6,500</h3>
-                  <p className="text-sm text-income/70 mt-1">+12.5% vs mes anterior</p>
+                  <p className="text-sm text-muted-foreground">Ingresos de {MONTHS[reportMonth]}</p>
+                  <h3 className="text-3xl font-bold text-income mt-2">{formatCurrency(monthSummary.totalIncome)}</h3>
                 </div>
                 <div className="kpi-card-expense">
-                  <p className="text-sm text-muted-foreground">Gastos del Mes</p>
-                  <h3 className="text-3xl font-bold text-expense mt-2">$4,200</h3>
-                  <p className="text-sm text-expense/70 mt-1">-5.2% vs mes anterior</p>
+                  <p className="text-sm text-muted-foreground">Gastos de {MONTHS[reportMonth]}</p>
+                  <h3 className="text-3xl font-bold text-expense mt-2">{formatCurrency(monthSummary.totalExpenses)}</h3>
                 </div>
                 <div className="kpi-card-balance">
-                  <p className="text-sm text-muted-foreground">Ahorro del Mes</p>
-                  <h3 className="text-3xl font-bold text-balance mt-2">$2,300</h3>
-                  <p className="text-sm text-balance/70 mt-1">35.4% de tasa de ahorro</p>
+                  <p className="text-sm text-muted-foreground">Ahorro de {MONTHS[reportMonth]}</p>
+                  <h3 className="text-3xl font-bold text-balance mt-2">{formatCurrency(monthSummary.netBalance)}</h3>
+                  <p className="text-sm text-balance/70 mt-1">
+                    {monthSummary.totalIncome > 0 
+                      ? `${Math.round((monthSummary.netBalance / monthSummary.totalIncome) * 100)}% de tasa de ahorro`
+                      : 'Sin ingresos registrados'}
+                  </p>
                 </div>
               </motion.div>
             </div>
@@ -153,13 +240,30 @@ export default function ReportsPage() {
 
           {/* Annual Report */}
           <TabsContent value="annual" className="space-y-6">
+            {/* Year Selector */}
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground">Reporte del año:</span>
+              <Select value={annualReportYear.toString()} onValueChange={(v) => setAnnualReportYear(parseInt(v))}>
+                <SelectTrigger className="w-[120px] h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {YEARS.map((y) => (
+                    <SelectItem key={y} value={y.toString()}>
+                      {y}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="kpi-card"
             >
               <h3 className="text-lg font-semibold text-foreground mb-6">
-                Ahorro Acumulado Anual
+                Ahorro Acumulado - {annualReportYear}
               </h3>
               <div className="h-[350px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -181,7 +285,7 @@ export default function ReportsPage() {
                       tick={{ fill: 'hsl(215, 20%, 55%)', fontSize: 12 }}
                       axisLine={false}
                       tickLine={false}
-                      tickFormatter={(value) => `$${value / 1000}k`}
+                      tickFormatter={(value) => formatCompactCurrency(value)}
                     />
                     <Tooltip 
                       contentStyle={{
@@ -190,6 +294,7 @@ export default function ReportsPage() {
                         borderRadius: '8px',
                       }}
                       labelStyle={{ color: 'hsl(210, 40%, 98%)' }}
+                      formatter={(value: number) => [formatCurrency(value), 'Ahorro Acumulado']}
                     />
                     <Area
                       type="monotone"
@@ -208,10 +313,10 @@ export default function ReportsPage() {
             {/* Annual Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: 'Ingresos Anuales', value: '$86,000', color: 'text-income' },
-                { label: 'Gastos Anuales', value: '$56,500', color: 'text-expense' },
-                { label: 'Ahorro Total', value: '$29,500', color: 'text-balance' },
-                { label: 'Tasa de Ahorro', value: '34.3%', color: 'text-primary' },
+                { label: `Ingresos ${annualReportYear}`, value: formatCurrency(yearSummary.totalIncome), color: 'text-income' },
+                { label: `Gastos ${annualReportYear}`, value: formatCurrency(yearSummary.totalExpenses), color: 'text-expense' },
+                { label: 'Ahorro Total', value: formatCurrency(yearSummary.netBalance), color: 'text-balance' },
+                { label: 'Tasa de Ahorro', value: `${annualSavingsRate}%`, color: 'text-primary' },
               ].map((stat, index) => (
                 <motion.div
                   key={stat.label}

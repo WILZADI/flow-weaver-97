@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Wallet, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { Wallet, Mail, Lock, ArrowRight, Loader2, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const { login, isAuthenticated } = useAuth();
@@ -28,6 +29,11 @@ export default function LoginPage() {
     e.preventDefault();
     setEmailError('');
 
+    if (!displayName.trim()) {
+      toast.error('Por favor ingresa tu nombre');
+      return;
+    }
+
     if (!validateEmail(email)) {
       setEmailError('Por favor ingresa un email válido');
       return;
@@ -40,8 +46,8 @@ export default function LoginPage() {
 
     setIsLoading(true);
     try {
-      await login(email, password);
-      toast.success('¡Bienvenido de nuevo!');
+      await login(email, password, displayName.trim());
+      toast.success(`¡Bienvenido, ${displayName.trim()}!`);
       navigate('/dashboard');
     } catch (error) {
       toast.error('Error al iniciar sesión');
@@ -114,10 +120,26 @@ export default function LoginPage() {
 
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground">Bienvenido de nuevo</h2>
-            <p className="text-muted-foreground mt-2">Ingresa tus credenciales para continuar</p>
+            <p className="text-muted-foreground mt-2">Ingresa tus datos para continuar</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Nombre de Usuario
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Tu nombre"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="pl-11 h-12 bg-secondary/50 border-border focus:border-primary"
+                />
+              </div>
+            </div>
+
             <div>
               <label className="text-sm font-medium text-foreground mb-2 block">
                 Email
