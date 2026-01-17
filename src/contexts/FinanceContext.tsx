@@ -62,6 +62,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     const newTransaction = {
       ...transaction,
       id: Date.now().toString(),
+      isUserCreated: true,
     };
     setTransactions(prev => [newTransaction, ...prev]);
   };
