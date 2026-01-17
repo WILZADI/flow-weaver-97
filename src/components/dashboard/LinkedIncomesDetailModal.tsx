@@ -1,4 +1,5 @@
 import { TrendingUp, TrendingDown, Link2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import {
   Dialog,
   DialogContent,
@@ -6,7 +7,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Progress } from '@/components/ui/progress';
 import { formatCurrency } from '@/lib/currency';
 import { cn } from '@/lib/utils';
 import { Transaction } from '@/types/finance';
@@ -83,28 +83,35 @@ export function LinkedIncomesDetailModal({
                     </div>
                   </div>
 
-                  {/* Progress Bar */}
+                  {/* Animated Progress Bar */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">Uso del ingreso</span>
-                      <span className={cn(
-                        "font-medium",
-                        usagePercent >= 100 ? "text-expense" : usagePercent >= 75 ? "text-pending" : "text-income"
-                      )}>
-                        {usagePercent.toFixed(0)}%
-                      </span>
-                    </div>
-                    <div className="relative">
-                      <Progress 
-                        value={usagePercent} 
-                        className="h-2 bg-muted"
-                      />
-                      <div 
+                      <motion.span 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 }}
                         className={cn(
-                          "absolute inset-0 h-2 rounded-full transition-all",
+                          "font-medium",
+                          usagePercent >= 100 ? "text-expense" : usagePercent >= 75 ? "text-pending" : "text-income"
+                        )}
+                      >
+                        {usagePercent.toFixed(0)}%
+                      </motion.span>
+                    </div>
+                    <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${usagePercent}%` }}
+                        transition={{ 
+                          duration: 0.8, 
+                          ease: "easeOut",
+                          delay: 0.2
+                        }}
+                        className={cn(
+                          "absolute inset-y-0 left-0 rounded-full",
                           usagePercent >= 100 ? "bg-expense" : usagePercent >= 75 ? "bg-pending" : "bg-income"
                         )}
-                        style={{ width: `${usagePercent}%` }}
                       />
                     </div>
                   </div>
@@ -167,28 +174,43 @@ export function LinkedIncomesDetailModal({
           </div>
         </ScrollArea>
 
-        {/* Overall Progress */}
-        <div className="space-y-2">
+        {/* Overall Animated Progress */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="space-y-2"
+        >
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Uso total de ingresos afectados</span>
-            <span className={cn(
-              "font-medium",
-              overallProgress >= 100 ? "text-expense" : overallProgress >= 75 ? "text-pending" : "text-income"
-            )}>
-              {overallProgress.toFixed(0)}%
-            </span>
-          </div>
-          <div className="relative">
-            <Progress value={overallProgress} className="h-3 bg-muted" />
-            <div 
+            <motion.span 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
               className={cn(
-                "absolute inset-0 h-3 rounded-full transition-all",
+                "font-medium",
+                overallProgress >= 100 ? "text-expense" : overallProgress >= 75 ? "text-pending" : "text-income"
+              )}
+            >
+              {overallProgress.toFixed(0)}%
+            </motion.span>
+          </div>
+          <div className="relative h-3 bg-muted rounded-full overflow-hidden">
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={{ width: `${overallProgress}%` }}
+              transition={{ 
+                duration: 1, 
+                ease: "easeOut",
+                delay: 0.5
+              }}
+              className={cn(
+                "absolute inset-y-0 left-0 rounded-full",
                 overallProgress >= 100 ? "bg-expense" : overallProgress >= 75 ? "bg-pending" : "bg-income"
               )}
-              style={{ width: `${overallProgress}%` }}
             />
           </div>
-        </div>
+        </motion.div>
 
         {/* Total Summary */}
         <div className="p-4 rounded-lg bg-income/10 border border-income/20">
