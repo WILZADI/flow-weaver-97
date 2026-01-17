@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, DollarSign, Bell, Shield, LogOut } from 'lucide-react';
+import { User, DollarSign, Bell, LogOut } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 export default function SettingsPage() {
   const { user, logout } = useAuth();
   const [name, setName] = useState(user?.name || '');
-  const [currency, setCurrency] = useState('MXN');
+  const [currency, setCurrency] = useState('COP');
   const [notifications, setNotifications] = useState(true);
 
   const handleSave = () => {
@@ -91,10 +91,10 @@ export default function SettingsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="COP">Peso Colombiano (COP)</SelectItem>
                 <SelectItem value="MXN">Peso Mexicano (MXN)</SelectItem>
                 <SelectItem value="USD">Dólar Estadounidense (USD)</SelectItem>
                 <SelectItem value="EUR">Euro (EUR)</SelectItem>
-                <SelectItem value="COP">Peso Colombiano (COP)</SelectItem>
               </SelectContent>
             </Select>
           </motion.div>
@@ -123,25 +123,6 @@ export default function SettingsPage() {
                 onCheckedChange={setNotifications}
               />
             </div>
-          </motion.div>
-
-          {/* Security Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="kpi-card"
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 rounded-lg bg-pending/10">
-                <Shield className="w-5 h-5 text-pending" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground">Seguridad</h3>
-            </div>
-
-            <Button variant="outline" className="w-full justify-start h-12">
-              Cambiar contraseña
-            </Button>
           </motion.div>
 
           {/* Actions */}

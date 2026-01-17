@@ -50,6 +50,7 @@ export default function TransactionsPage() {
   const { 
     transactions, 
     addTransaction, 
+    updateTransaction,
     deleteTransaction, 
     togglePending,
     selectedMonth,
@@ -63,8 +64,10 @@ export default function TransactionsPage() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Transaction | null>(null);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [showAllMonths, setShowAllMonths] = useState(false);
   const [newTransaction, setNewTransaction] = useState({
     type: 'expense' as 'income' | 'expense',
@@ -74,10 +77,52 @@ export default function TransactionsPage() {
     date: new Date().toISOString().split('T')[0],
     isPending: false,
   });
+  const [editForm, setEditForm] = useState({
+    type: 'expense' as 'income' | 'expense',
+    amount: '',
+    description: '',
+    category: '',
+    date: '',
+    isPending: false,
+  });
 
   const openLinkModal = (expense: Transaction) => {
     setSelectedExpense(expense);
     setLinkModalOpen(true);
+  };
+
+  const openEditModal = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setEditForm({
+      type: transaction.type,
+      amount: transaction.amount.toString(),
+      description: transaction.description,
+      category: transaction.category,
+      date: transaction.date,
+      isPending: transaction.isPending,
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditTransaction = () => {
+    if (!editingTransaction) return;
+    if (!editForm.amount || !editForm.description || !editForm.category) {
+      toast.error('Por favor completa todos los campos');
+      return;
+    }
+
+    updateTransaction(editingTransaction.id, {
+      type: editForm.type,
+      amount: parseFloat(editForm.amount),
+      description: editForm.description,
+      category: editForm.category,
+      date: editForm.date,
+      isPending: editForm.isPending,
+    });
+
+    setIsEditDialogOpen(false);
+    setEditingTransaction(null);
+    toast.success('Transacción actualizada correctamente');
   };
 
   // Get transactions filtered by month/year
@@ -364,7 +409,7 @@ export default function TransactionsPage() {
                     </td>
                     <td className="py-4 px-4 text-muted-foreground">{transaction.category}</td>
                     <td className="py-4 px-4 text-muted-foreground">
-                      {new Date(transaction.date).toLocaleDateString('es-MX')}
+                      {new Date(transaction.date).toLocaleDateString('es-CO')}
                     </td>
                     <td className="py-4 px-4">
                       <button
@@ -396,7 +441,7 @@ export default function TransactionsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem className="gap-2">
+                          <DropdownMenuItem className="gap-2" onClick={() => openEditModal(transaction)}>
                             <Edit className="w-4 h-4" /> Editar
                           </DropdownMenuItem>
                           {transaction.type === 'expense' && (
@@ -479,7 +524,7 @@ export default function TransactionsPage() {
                       </Button>
                     </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem className="gap-2">
+                        <DropdownMenuItem className="gap-2" onClick={() => openEditModal(transaction)}>
                           <Edit className="w-4 h-4" /> Editar
                         </DropdownMenuItem>
                         {transaction.type === 'expense' && (
@@ -499,7 +544,7 @@ export default function TransactionsPage() {
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-muted-foreground">
-                      {new Date(transaction.date).toLocaleDateString('es-MX')}
+                      {new Date(transaction.date).toLocaleDateString('es-CO')}
                     </span>
                     {transaction.isPending && (
                       <span className="flex items-center gap-1 text-xs text-pending">
@@ -518,6 +563,112 @@ export default function TransactionsPage() {
             ))}
           </AnimatePresence>
         </div>
+
+        {/* Edit Transaction Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-md bg-card border-border">
+            <DialogHeader>
+              <DialogTitle>Editar Transacción</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={editForm.type === 'income' ? 'default' : 'outline'}
+                  className={cn(
+                    "flex-1",
+                    editForm.type === 'income' && "bg-income hover:bg-income/90"
+                  )}
+                  onClick={() => setEditForm(prev => ({ ...prev, type: 'income', category: '' }))}
+                >
+                  <TrendingUp className="w-4 h-4 mr-2" />
+                  Ingreso
+                </Button>
+                <Button
+                  type="button"
+                  variant={editForm.type === 'expense' ? 'default' : 'outline'}
+                  className={cn(
+                    "flex-1",
+                    editForm.type === 'expense' && "bg-expense hover:bg-expense/90"
+                  )}
+                  onClick={() => setEditForm(prev => ({ ...prev, type: 'expense', category: '' }))}
+                >
+                  <TrendingDown className="w-4 h-4 mr-2" />
+                  Gasto
+                </Button>
+              </div>
+
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Fecha</label>
+                <Input
+                  type="date"
+                  value={editForm.date}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, date: e.target.value }))}
+                  className="h-12"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Monto (COP)</label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={editForm.amount}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, amount: e.target.value }))}
+                  className="h-12"
+                />
+              </div>
+
+              <Input
+                placeholder="Descripción"
+                value={editForm.description}
+                onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                className="h-12"
+              />
+
+              <Select
+                value={editForm.category}
+                onValueChange={(value) => setEditForm(prev => ({ ...prev, category: value }))}
+              >
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Categoría" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories
+                    .filter(c => c.type === editForm.type)
+                    .map(category => (
+                      <SelectItem key={category.id} value={category.name}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="editIsPending"
+                  checked={editForm.isPending}
+                  onCheckedChange={(checked) => 
+                    setEditForm(prev => ({ ...prev, isPending: checked === true }))
+                  }
+                />
+                <label
+                  htmlFor="editIsPending"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Marcar como pendiente
+                </label>
+              </div>
+
+              <Button
+                onClick={handleEditTransaction}
+                className="w-full h-12 bg-primary hover:bg-primary/90"
+              >
+                Guardar Cambios
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Link Expense Modal */}
         <LinkExpenseModal
