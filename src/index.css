@@ -2,95 +2,82 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* Personal Finance SaaS Design System
+   Palette: Dark Blue (#1E293B), Grey (#64748B), Black (#020617), Purple (#7C3AED)
+   Semantic: Red (Expenses), Green (Income), Blue (Balance), Orange (Pending)
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Dark professional theme - default */
+    --background: 222 47% 4%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 222 47% 8%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 222 47% 8%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 263 70% 50%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 55%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 217 33% 22%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 263 70% 50%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Semantic Finance Colors */
+    --income: 142 76% 36%;
+    --income-foreground: 142 76% 95%;
+    --expense: 0 72% 51%;
+    --expense-foreground: 0 72% 95%;
+    --balance: 217 91% 60%;
+    --balance-foreground: 217 91% 95%;
+    --pending: 25 95% 53%;
+    --pending-foreground: 25 95% 95%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* Sidebar */
+    --sidebar-background: 222 47% 6%;
+    --sidebar-foreground: 215 20% 65%;
+    --sidebar-primary: 263 70% 50%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 17%;
+    --sidebar-ring: 263 70% 50%;
 
-    --sidebar-primary: 240 5.9% 10%;
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(263 70% 50%) 0%, hsl(280 80% 60%) 100%);
+    --gradient-income: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(160 60% 45%) 100%);
+    --gradient-expense: linear-gradient(135deg, hsl(0 72% 51%) 0%, hsl(15 80% 55%) 100%);
+    --gradient-balance: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(200 90% 55%) 100%);
+    --gradient-pending: linear-gradient(135deg, hsl(25 95% 53%) 0%, hsl(40 90% 55%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(222 47% 10%) 0%, hsl(222 47% 6%) 100%);
 
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Shadows */
+    --shadow-glow-primary: 0 0 40px hsl(263 70% 50% / 0.3);
+    --shadow-glow-income: 0 0 30px hsl(142 76% 36% / 0.25);
+    --shadow-glow-expense: 0 0 30px hsl(0 72% 51% / 0.25);
+    --shadow-glow-pending: 0 0 30px hsl(25 95% 53% / 0.25);
+    --shadow-card: 0 4px 24px hsl(222 47% 4% / 0.5);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Already dark by default */
   }
 }
 
@@ -100,6 +87,84 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+}
+
+@layer components {
+  /* KPI Card Variants */
+  .kpi-card {
+    @apply relative overflow-hidden rounded-xl border border-border/50 p-6 transition-all duration-300;
+    background: var(--gradient-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  .kpi-card:hover {
+    @apply border-border;
+    transform: translateY(-2px);
+  }
+
+  .kpi-card-income {
+    @apply kpi-card;
+    border-left: 3px solid hsl(var(--income));
+  }
+
+  .kpi-card-expense {
+    @apply kpi-card;
+    border-left: 3px solid hsl(var(--expense));
+  }
+
+  .kpi-card-balance {
+    @apply kpi-card;
+    border-left: 3px solid hsl(var(--balance));
+  }
+
+  .kpi-card-pending {
+    @apply kpi-card;
+    border-left: 3px solid hsl(var(--pending));
+  }
+
+  /* Glass effect */
+  .glass {
+    @apply backdrop-blur-xl;
+    background: hsl(var(--card) / 0.8);
+  }
+
+  /* Bottom dock for mobile */
+  .bottom-dock {
+    @apply fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 backdrop-blur-xl;
+    background: hsl(var(--background) / 0.95);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Skeleton loader */
+  .skeleton {
+    @apply animate-pulse rounded-md;
+    background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--accent)) 50%, hsl(var(--muted)) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite;
+  }
+
+  @keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+}
+
+@layer utilities {
+  .text-income { color: hsl(var(--income)); }
+  .text-expense { color: hsl(var(--expense)); }
+  .text-balance { color: hsl(var(--balance)); }
+  .text-pending { color: hsl(var(--pending)); }
+  
+  .bg-income { background-color: hsl(var(--income)); }
+  .bg-expense { background-color: hsl(var(--expense)); }
+  .bg-balance { background-color: hsl(var(--balance)); }
+  .bg-pending { background-color: hsl(var(--pending)); }
+  
+  .bg-income\/10 { background-color: hsl(var(--income) / 0.1); }
+  .bg-expense\/10 { background-color: hsl(var(--expense) / 0.1); }
+  .bg-balance\/10 { background-color: hsl(var(--balance) / 0.1); }
+  .bg-pending\/10 { background-color: hsl(var(--pending) / 0.1); }
 }
