@@ -16,12 +16,13 @@ import {
 import { toast } from 'sonner';
 
 export default function SettingsPage() {
-  const { user, logout } = useAuth();
-  const [name, setName] = useState(user?.name || '');
+  const { user, logout, updateDisplayName } = useAuth();
+  const [name, setName] = useState(user?.displayName || user?.name || '');
   const [currency, setCurrency] = useState('COP');
   const [notifications, setNotifications] = useState(true);
 
   const handleSave = () => {
+    updateDisplayName(name);
     toast.success('Configuración guardada correctamente');
   };
 

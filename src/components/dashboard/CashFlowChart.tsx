@@ -81,7 +81,7 @@ export function CashFlowChart({ data, selectedMonth }: CashFlowChartProps) {
                   'Gastos': 'hsl(0, 72%, 51%)',
                   'Balance': 'hsl(217, 91%, 60%)',
                 };
-                return <span style={{ color: colorMap[value] || 'hsl(215, 20%, 55%)' }}>{value}</span>;
+                return <span style={{ color: colorMap[value] || 'hsl(215, 20%, 55%)', fontWeight: 500 }}>{value}</span>;
               }}
             />
             <Bar 

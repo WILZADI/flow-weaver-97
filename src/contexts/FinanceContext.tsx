@@ -38,7 +38,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const getMonthSummary = useCallback((month: number, year: number): FinanceSummary => {
     const filtered = getFilteredTransactions(month, year);
     const totalIncome = filtered.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-    const totalExpenses = filtered.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    // Solo contar gastos que NO están pendientes (ya pagados)
+    const totalExpenses = filtered.filter(t => t.type === 'expense' && !t.isPending).reduce((sum, t) => sum + t.amount, 0);
     const pendingTotal = filtered.filter(t => t.isPending).reduce((sum, t) => sum + t.amount, 0);
     return { totalIncome, totalExpenses, netBalance: totalIncome - totalExpenses, pendingTotal };
   }, [getFilteredTransactions]);
@@ -46,7 +47,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const getYearSummary = useCallback((year: number): FinanceSummary => {
     const filtered = getFilteredTransactions(undefined, year);
     const totalIncome = filtered.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-    const totalExpenses = filtered.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    // Solo contar gastos que NO están pendientes (ya pagados)
+    const totalExpenses = filtered.filter(t => t.type === 'expense' && !t.isPending).reduce((sum, t) => sum + t.amount, 0);
     const pendingTotal = filtered.filter(t => t.isPending).reduce((sum, t) => sum + t.amount, 0);
     return { totalIncome, totalExpenses, netBalance: totalIncome - totalExpenses, pendingTotal };
   }, [getFilteredTransactions]);
