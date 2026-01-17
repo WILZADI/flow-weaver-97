@@ -39,6 +39,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { categories } from '@/data/mockData';
 import { cn } from '@/lib/utils';
@@ -69,6 +79,8 @@ export default function TransactionsPage() {
   const [selectedExpense, setSelectedExpense] = useState<Transaction | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [showAllMonths, setShowAllMonths] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
   const [newTransaction, setNewTransaction] = useState({
     type: 'expense' as 'income' | 'expense',
     amount: '',
@@ -167,9 +179,18 @@ export default function TransactionsPage() {
     toast.success('Transacción agregada correctamente');
   };
 
-  const handleDelete = (id: string) => {
-    deleteTransaction(id);
-    toast.success('Transacción eliminada');
+  const openDeleteDialog = (transaction: Transaction) => {
+    setTransactionToDelete(transaction);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (transactionToDelete) {
+      deleteTransaction(transactionToDelete.id);
+      toast.success('Transacción eliminada');
+      setDeleteDialogOpen(false);
+      setTransactionToDelete(null);
+    }
   };
 
   return (
@@ -451,7 +472,7 @@ export default function TransactionsPage() {
                           )}
                           <DropdownMenuItem 
                             className="gap-2 text-destructive focus:text-destructive"
-                            onClick={() => handleDelete(transaction.id)}
+                            onClick={() => openDeleteDialog(transaction)}
                           >
                             <Trash2 className="w-4 h-4" /> Eliminar
                           </DropdownMenuItem>
@@ -534,7 +555,7 @@ export default function TransactionsPage() {
                         )}
                         <DropdownMenuItem 
                           className="gap-2 text-destructive"
-                          onClick={() => handleDelete(transaction.id)}
+                          onClick={() => openDeleteDialog(transaction)}
                         >
                           <Trash2 className="w-4 h-4" /> Eliminar
                       </DropdownMenuItem>
@@ -679,6 +700,36 @@ export default function TransactionsPage() {
             if (!open) setSelectedExpense(null);
           }}
         />
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent className="bg-card border-border">
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Eliminar transacción?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {transactionToDelete && (
+                  <>
+                    Estás a punto de eliminar <strong>"{transactionToDelete.description}"</strong> por{' '}
+                    <strong className={transactionToDelete.type === 'income' ? 'text-income' : 'text-expense'}>
+                      {formatCurrency(transactionToDelete.amount)}
+                    </strong>.
+                    <br /><br />
+                    Esta acción no se puede deshacer.
+                  </>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={confirmDelete}
+                className="bg-destructive hover:bg-destructive/90"
+              >
+                Eliminar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AppLayout>
   );
