@@ -1,3 +1,4 @@
+// Finance Context - Manages all financial data and transactions
 import { createContext, useContext, useState, ReactNode, useMemo, useCallback } from 'react';
 import { Transaction, FinanceSummary } from '@/types/finance';
 import { mockTransactions } from '@/data/mockData';
