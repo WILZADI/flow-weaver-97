@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
-import { TrendingUp, TrendingDown, Wallet, Clock, Link2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, Clock, Link2, ChevronRight } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { CashFlowChart } from '@/components/dashboard/CashFlowChart';
 import { PendingCard } from '@/components/dashboard/PendingCard';
 import { MonthYearSelector } from '@/components/shared/MonthYearSelector';
+import { LinkedIncomesDetailModal } from '@/components/dashboard/LinkedIncomesDetailModal';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/currency';
 import { cn } from '@/lib/utils';
@@ -32,7 +33,7 @@ export default function DashboardPage() {
   } = useFinance();
   
   const [showAllMonths, setShowAllMonths] = useState(false);
-  
+  const [showLinkedIncomesModal, setShowLinkedIncomesModal] = useState(false);
   const summary = showAllMonths 
     ? getYearSummary(selectedYear) 
     : getMonthSummary(selectedMonth, selectedYear);
@@ -53,18 +54,22 @@ export default function DashboardPage() {
     ? getFilteredTransactions(undefined, selectedYear).filter(t => t.isPending)
     : getFilteredTransactions(selectedMonth, selectedYear).filter(t => t.isPending);
 
-  // Get linked incomes information with remaining balance
+  // Get linked incomes information with remaining balance and expense details
   const linkedIncomesInfo = useMemo(() => {
     const filteredTransactions = showAllMonths
       ? getFilteredTransactions(undefined, selectedYear)
       : getFilteredTransactions(selectedMonth, selectedYear);
     
-    // Calculate expenses per linked income
+    // Calculate expenses per linked income and collect expense details
     const expensesByIncome = new Map<string, number>();
+    const expenseDetailsByIncome = new Map<string, typeof filteredTransactions>();
+    
     filteredTransactions.forEach(t => {
       if (t.type === 'expense' && t.linkedIncomeIds) {
         t.linkedIncomeIds.forEach(id => {
           expensesByIncome.set(id, (expensesByIncome.get(id) || 0) + t.amount);
+          const existing = expenseDetailsByIncome.get(id) || [];
+          expenseDetailsByIncome.set(id, [...existing, t]);
         });
       }
     });
@@ -78,6 +83,7 @@ export default function DashboardPage() {
         label: `${income.category} ${index + 1}`,
         expensesLinked: expensesByIncome.get(income.id) || 0,
         remainingBalance: income.amount - (expensesByIncome.get(income.id) || 0),
+        linkedExpenses: expenseDetailsByIncome.get(income.id) || [],
       }));
     
     const totalRemainingBalance = linkedIncomes.reduce((sum, t) => sum + t.remainingBalance, 0);
@@ -127,10 +133,16 @@ export default function DashboardPage() {
               delay={0}
             />
             {linkedIncomesInfo.count > 0 && (
-              <div className="bg-card border border-income/20 rounded-lg p-2.5 shadow-sm">
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <Link2 className="w-3 h-3 text-income" />
-                  <span className="text-[10px] font-medium text-foreground">Ingresos Afectados</span>
+              <button
+                onClick={() => setShowLinkedIncomesModal(true)}
+                className="w-full bg-card border border-income/20 rounded-lg p-2.5 shadow-sm hover:border-income/40 hover:bg-accent/30 transition-all cursor-pointer text-left group"
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <Link2 className="w-3 h-3 text-income" />
+                    <span className="text-[10px] font-medium text-foreground">Ingresos Afectados</span>
+                  </div>
+                  <ChevronRight className="w-3 h-3 text-muted-foreground group-hover:text-income transition-colors" />
                 </div>
                 <div className="space-y-1">
                   {linkedIncomesInfo.incomes.slice(0, 2).map(income => (
@@ -151,7 +163,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </button>
             )}
           </div>
           
@@ -186,6 +198,14 @@ export default function DashboardPage() {
           <PendingCard transactions={pendingTransactions} />
         </div>
       </div>
+
+      {/* Modal for Linked Incomes Detail */}
+      <LinkedIncomesDetailModal
+        open={showLinkedIncomesModal}
+        onOpenChange={setShowLinkedIncomesModal}
+        incomes={linkedIncomesInfo.incomes}
+        totalRemainingBalance={linkedIncomesInfo.totalRemainingBalance}
+      />
     </AppLayout>
   );
 }
