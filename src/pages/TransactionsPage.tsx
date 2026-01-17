@@ -18,6 +18,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { useFinance } from '@/contexts/FinanceContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -43,6 +44,7 @@ import { categories } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { Transaction } from '@/types/finance';
 import { LinkExpenseModal } from '@/components/transactions/LinkExpenseModal';
+import { formatCurrency } from '@/lib/currency';
 
 export default function TransactionsPage() {
   const { 
@@ -70,6 +72,7 @@ export default function TransactionsPage() {
     description: '',
     category: '',
     date: new Date().toISOString().split('T')[0],
+    isPending: false,
   });
 
   const openLinkModal = (expense: Transaction) => {
@@ -104,7 +107,7 @@ export default function TransactionsPage() {
       description: newTransaction.description,
       category: newTransaction.category,
       date: newTransaction.date,
-      isPending: false,
+      isPending: newTransaction.isPending,
     });
 
     setIsDialogOpen(false);
@@ -114,6 +117,7 @@ export default function TransactionsPage() {
       description: '',
       category: '',
       date: new Date().toISOString().split('T')[0],
+      isPending: false,
     });
     toast.success('Transacción agregada correctamente');
   };
@@ -154,7 +158,7 @@ export default function TransactionsPage() {
                         "flex-1",
                         newTransaction.type === 'income' && "bg-income hover:bg-income/90"
                       )}
-                      onClick={() => setNewTransaction(prev => ({ ...prev, type: 'income' }))}
+                      onClick={() => setNewTransaction(prev => ({ ...prev, type: 'income', category: '' }))}
                     >
                       <TrendingUp className="w-4 h-4 mr-2" />
                       Ingreso
@@ -166,20 +170,33 @@ export default function TransactionsPage() {
                         "flex-1",
                         newTransaction.type === 'expense' && "bg-expense hover:bg-expense/90"
                       )}
-                      onClick={() => setNewTransaction(prev => ({ ...prev, type: 'expense' }))}
+                      onClick={() => setNewTransaction(prev => ({ ...prev, type: 'expense', category: '' }))}
                     >
                       <TrendingDown className="w-4 h-4 mr-2" />
                       Gasto
                     </Button>
                   </div>
 
-                  <Input
-                    type="number"
-                    placeholder="Monto"
-                    value={newTransaction.amount}
-                    onChange={(e) => setNewTransaction(prev => ({ ...prev, amount: e.target.value }))}
-                    className="h-12"
-                  />
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-1 block">Fecha</label>
+                    <Input
+                      type="date"
+                      value={newTransaction.date}
+                      onChange={(e) => setNewTransaction(prev => ({ ...prev, date: e.target.value }))}
+                      className="h-12"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-1 block">Monto (COP)</label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={newTransaction.amount}
+                      onChange={(e) => setNewTransaction(prev => ({ ...prev, amount: e.target.value }))}
+                      className="h-12"
+                    />
+                  </div>
 
                   <Input
                     placeholder="Descripción"
@@ -206,12 +223,21 @@ export default function TransactionsPage() {
                     </SelectContent>
                   </Select>
 
-                  <Input
-                    type="date"
-                    value={newTransaction.date}
-                    onChange={(e) => setNewTransaction(prev => ({ ...prev, date: e.target.value }))}
-                    className="h-12"
-                  />
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="isPending"
+                      checked={newTransaction.isPending}
+                      onCheckedChange={(checked) => 
+                        setNewTransaction(prev => ({ ...prev, isPending: checked === true }))
+                      }
+                    />
+                    <label
+                      htmlFor="isPending"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Marcar como pendiente
+                    </label>
+                  </div>
 
                   <Button
                     onClick={handleAddTransaction}
@@ -325,7 +351,7 @@ export default function TransactionsPage() {
                                     return income ? (
                                       <li key={id} className="flex items-center justify-between gap-3 text-xs">
                                         <span>{income.description}</span>
-                                        <span className="text-income font-medium">+${income.amount.toLocaleString()}</span>
+                                        <span className="text-income font-medium">+{formatCurrency(income.amount)}</span>
                                       </li>
                                     ) : null;
                                   })}
@@ -360,7 +386,7 @@ export default function TransactionsPage() {
                       "py-4 px-4 text-right font-bold",
                       transaction.type === 'income' ? "text-income" : "text-expense"
                     )}>
-                      {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString()}
+                      {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
                     </td>
                     <td className="py-4 px-4 text-right">
                       <DropdownMenu>
@@ -436,7 +462,7 @@ export default function TransactionsPage() {
                                 return income ? (
                                   <li key={id} className="flex items-center justify-between gap-3 text-xs">
                                     <span>{income.description}</span>
-                                    <span className="text-income font-medium">+${income.amount.toLocaleString()}</span>
+                                    <span className="text-income font-medium">+{formatCurrency(income.amount)}</span>
                                   </li>
                                 ) : null;
                               })}
@@ -485,7 +511,7 @@ export default function TransactionsPage() {
                     "text-lg font-bold",
                     transaction.type === 'income' ? "text-income" : "text-expense"
                   )}>
-                    {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString()}
+                    {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
                   </span>
                 </div>
               </motion.div>
