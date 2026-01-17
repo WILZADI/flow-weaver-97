@@ -105,9 +105,9 @@ export default function DashboardPage() {
         </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6">
           {/* Income Card with Linked Incomes Sub-card */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <KPICard
               title="Ingresos Totales"
               value={summary.totalIncome}
@@ -116,26 +116,26 @@ export default function DashboardPage() {
               delay={0}
             />
             {linkedIncomesInfo.count > 0 && (
-              <div className="bg-card border border-income/20 rounded-xl p-3 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <Link2 className="w-4 h-4 text-income" />
-                  <span className="text-xs font-medium text-foreground">Ingresos Afectados</span>
+              <div className="bg-card border border-income/20 rounded-lg p-2.5 shadow-sm">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <Link2 className="w-3 h-3 text-income" />
+                  <span className="text-[10px] font-medium text-foreground">Ingresos Afectados</span>
                 </div>
-                <div className="space-y-1.5">
-                  {linkedIncomesInfo.incomes.slice(0, 3).map(income => (
-                    <div key={income.id} className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground truncate max-w-[120px]">{income.description}</span>
+                <div className="space-y-1">
+                  {linkedIncomesInfo.incomes.slice(0, 2).map(income => (
+                    <div key={income.id} className="flex items-center justify-between text-[10px]">
+                      <span className="text-muted-foreground truncate max-w-[80px]">{income.description}</span>
                       <span className="text-income font-medium">{formatCurrency(income.amount)}</span>
                     </div>
                   ))}
-                  {linkedIncomesInfo.count > 3 && (
-                    <p className="text-xs text-muted-foreground">
-                      +{linkedIncomesInfo.count - 3} más
+                  {linkedIncomesInfo.count > 2 && (
+                    <p className="text-[10px] text-muted-foreground">
+                      +{linkedIncomesInfo.count - 2} más
                     </p>
                   )}
-                  <div className="pt-1.5 border-t border-border/50">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-medium text-foreground">Total afectado</span>
+                  <div className="pt-1 border-t border-border/50">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="font-medium text-foreground">Total</span>
                       <span className="text-income font-bold">{formatCurrency(linkedIncomesInfo.totalLinkedAmount)}</span>
                     </div>
                   </div>
