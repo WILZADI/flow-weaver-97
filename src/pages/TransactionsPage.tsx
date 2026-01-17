@@ -285,12 +285,16 @@ export default function TransactionsPage() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem 
                     className="gap-2"
-                    onClick={() => {
+                    onClick={async () => {
                       const period = showAllMonths 
                         ? `${selectedYear}` 
                         : `${MONTHS[selectedMonth]}_${selectedYear}`;
-                      exportToExcel(filteredTransactions, `transacciones_${period}`);
-                      toast.success('Archivo Excel generado correctamente');
+                      try {
+                        await exportToExcel(filteredTransactions, `transacciones_${period}`);
+                        toast.success('Archivo Excel generado correctamente');
+                      } catch (error) {
+                        toast.error('Error al generar el archivo Excel');
+                      }
                     }}
                   >
                     <FileSpreadsheet className="w-4 h-4 text-green-600" />
