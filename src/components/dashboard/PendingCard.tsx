@@ -3,10 +3,17 @@ import { Clock, Check } from 'lucide-react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { Transaction } from '@/types/finance';
 
-export function PendingCard() {
-  const { transactions, togglePending } = useFinance();
-  const pendingTransactions = transactions.filter(t => t.isPending);
+interface PendingCardProps {
+  transactions?: Transaction[];
+}
+
+export function PendingCard({ transactions: externalTransactions }: PendingCardProps) {
+  const { transactions: allTransactions, togglePending } = useFinance();
+  
+  // Use external transactions if provided, otherwise use context
+  const pendingTransactions = externalTransactions ?? allTransactions.filter(t => t.isPending);
 
   const handleMarkAsPaid = (id: string, description: string) => {
     togglePending(id);
