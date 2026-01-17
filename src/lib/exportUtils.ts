@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Transaction } from '@/types/finance';
@@ -20,38 +20,68 @@ const formatDate = (date: string): string => {
   });
 };
 
-export const exportToExcel = (
+export const exportToExcel = async (
   transactions: Transaction[],
   filename: string = 'transacciones'
 ) => {
-  // Prepare data for Excel
-  const data = transactions.map((t) => ({
-    Tipo: t.type === 'income' ? 'Ingreso' : 'Gasto',
-    Descripción: t.description,
-    Categoría: t.category,
-    Fecha: formatDate(t.date),
-    Estado: t.isPending ? 'Pendiente' : 'Pagado',
-    Monto: t.amount,
-  }));
+  // Create workbook and worksheet
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'FinanceFlow';
+  workbook.created = new Date();
 
-  // Create worksheet
-  const ws = XLSX.utils.json_to_sheet(data);
+  // Transactions sheet
+  const worksheet = workbook.addWorksheet('Transacciones');
 
-  // Set column widths
-  ws['!cols'] = [
-    { wch: 10 }, // Tipo
-    { wch: 30 }, // Descripción
-    { wch: 15 }, // Categoría
-    { wch: 15 }, // Fecha
-    { wch: 12 }, // Estado
-    { wch: 15 }, // Monto
+  // Define columns
+  worksheet.columns = [
+    { header: 'Tipo', key: 'tipo', width: 12 },
+    { header: 'Descripción', key: 'descripcion', width: 35 },
+    { header: 'Categoría', key: 'categoria', width: 18 },
+    { header: 'Fecha', key: 'fecha', width: 15 },
+    { header: 'Estado', key: 'estado', width: 12 },
+    { header: 'Monto', key: 'monto', width: 18 },
   ];
 
-  // Create workbook
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Transacciones');
+  // Style header row
+  const headerRow = worksheet.getRow(1);
+  headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  headerRow.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FF7C3AED' }, // Purple primary
+  };
+  headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+  // Add data rows
+  transactions.forEach((t) => {
+    const row = worksheet.addRow({
+      tipo: t.type === 'income' ? 'Ingreso' : 'Gasto',
+      descripcion: t.description,
+      categoria: t.category,
+      fecha: formatDate(t.date),
+      estado: t.isPending ? 'Pendiente' : 'Pagado',
+      monto: t.amount,
+    });
+
+    // Color the type and amount cells based on transaction type
+    const tipoCell = row.getCell('tipo');
+    const montoCell = row.getCell('monto');
+    
+    if (t.type === 'income') {
+      tipoCell.font = { color: { argb: 'FF22C55E' } }; // Green
+      montoCell.font = { color: { argb: 'FF22C55E' } };
+    } else {
+      tipoCell.font = { color: { argb: 'FFEF4444' } }; // Red
+      montoCell.font = { color: { argb: 'FFEF4444' } };
+    }
+
+    // Format amount as currency
+    montoCell.numFmt = '"$"#,##0';
+  });
 
   // Add summary sheet
+  const summarySheet = workbook.addWorksheet('Resumen');
+  
   const totalIncome = transactions
     .filter((t) => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0);
@@ -62,19 +92,51 @@ export const exportToExcel = (
     .filter((t) => t.isPending)
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const summaryData = [
-    { Concepto: 'Total Ingresos', Monto: totalIncome },
-    { Concepto: 'Total Gastos', Monto: totalExpenses },
-    { Concepto: 'Balance Neto', Monto: totalIncome - totalExpenses },
-    { Concepto: 'Pendiente por Pagar', Monto: pendingTotal },
+  summarySheet.columns = [
+    { header: 'Concepto', key: 'concepto', width: 25 },
+    { header: 'Monto', key: 'monto', width: 20 },
   ];
 
-  const wsSummary = XLSX.utils.json_to_sheet(summaryData);
-  wsSummary['!cols'] = [{ wch: 25 }, { wch: 15 }];
-  XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumen');
+  // Style summary header
+  const summaryHeaderRow = summarySheet.getRow(1);
+  summaryHeaderRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  summaryHeaderRow.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FF7C3AED' },
+  };
 
-  // Download file
-  XLSX.writeFile(wb, `${filename}.xlsx`);
+  // Add summary data
+  const incomeRow = summarySheet.addRow({ concepto: 'Total Ingresos', monto: totalIncome });
+  incomeRow.getCell('monto').font = { color: { argb: 'FF22C55E' } };
+  incomeRow.getCell('monto').numFmt = '"$"#,##0';
+
+  const expenseRow = summarySheet.addRow({ concepto: 'Total Gastos', monto: totalExpenses });
+  expenseRow.getCell('monto').font = { color: { argb: 'FFEF4444' } };
+  expenseRow.getCell('monto').numFmt = '"$"#,##0';
+
+  const balanceRow = summarySheet.addRow({ concepto: 'Balance Neto', monto: totalIncome - totalExpenses });
+  balanceRow.getCell('monto').font = { bold: true };
+  balanceRow.getCell('monto').numFmt = '"$"#,##0';
+
+  const pendingRow = summarySheet.addRow({ concepto: 'Pendiente por Pagar', monto: pendingTotal });
+  pendingRow.getCell('monto').font = { color: { argb: 'FFF59E0B' } };
+  pendingRow.getCell('monto').numFmt = '"$"#,##0';
+
+  // Generate and download file
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { 
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+  });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${filename}.xlsx`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
 
 export const exportToPDF = (
