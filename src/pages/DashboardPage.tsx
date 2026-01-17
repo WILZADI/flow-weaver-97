@@ -53,27 +53,38 @@ export default function DashboardPage() {
     ? getFilteredTransactions(undefined, selectedYear).filter(t => t.isPending)
     : getFilteredTransactions(selectedMonth, selectedYear).filter(t => t.isPending);
 
-  // Get linked incomes information
+  // Get linked incomes information with remaining balance
   const linkedIncomesInfo = useMemo(() => {
     const filteredTransactions = showAllMonths
       ? getFilteredTransactions(undefined, selectedYear)
       : getFilteredTransactions(selectedMonth, selectedYear);
     
-    // Get all income IDs that are linked to expenses
-    const linkedIncomeIds = new Set<string>();
+    // Calculate expenses per linked income
+    const expensesByIncome = new Map<string, number>();
     filteredTransactions.forEach(t => {
       if (t.type === 'expense' && t.linkedIncomeIds) {
-        t.linkedIncomeIds.forEach(id => linkedIncomeIds.add(id));
+        t.linkedIncomeIds.forEach(id => {
+          expensesByIncome.set(id, (expensesByIncome.get(id) || 0) + t.amount);
+        });
       }
     });
 
-    // Get the actual linked income transactions
-    const linkedIncomes = transactions.filter(t => linkedIncomeIds.has(t.id));
-    const totalLinkedAmount = linkedIncomes.reduce((sum, t) => sum + t.amount, 0);
+    // Get the actual linked income transactions with remaining balance
+    const linkedIncomeIds = new Set(expensesByIncome.keys());
+    const linkedIncomes = transactions
+      .filter(t => linkedIncomeIds.has(t.id))
+      .map((income, index) => ({
+        ...income,
+        label: `${income.category} ${index + 1}`,
+        expensesLinked: expensesByIncome.get(income.id) || 0,
+        remainingBalance: income.amount - (expensesByIncome.get(income.id) || 0),
+      }));
+    
+    const totalRemainingBalance = linkedIncomes.reduce((sum, t) => sum + t.remainingBalance, 0);
 
     return {
       incomes: linkedIncomes,
-      totalLinkedAmount,
+      totalRemainingBalance,
       count: linkedIncomes.length,
     };
   }, [transactions, showAllMonths, selectedMonth, selectedYear, getFilteredTransactions]);
@@ -124,8 +135,8 @@ export default function DashboardPage() {
                 <div className="space-y-1">
                   {linkedIncomesInfo.incomes.slice(0, 2).map(income => (
                     <div key={income.id} className="flex items-center justify-between text-[10px]">
-                      <span className="text-muted-foreground truncate max-w-[80px]">{income.description}</span>
-                      <span className="text-income font-medium">{formatCurrency(income.amount)}</span>
+                      <span className="text-muted-foreground truncate max-w-[80px]">{income.label}</span>
+                      <span className="text-income font-medium">{formatCurrency(income.remainingBalance)}</span>
                     </div>
                   ))}
                   {linkedIncomesInfo.count > 2 && (
@@ -135,8 +146,8 @@ export default function DashboardPage() {
                   )}
                   <div className="pt-1 border-t border-border/50">
                     <div className="flex items-center justify-between text-[10px]">
-                      <span className="font-medium text-foreground">Total</span>
-                      <span className="text-income font-bold">{formatCurrency(linkedIncomesInfo.totalLinkedAmount)}</span>
+                      <span className="font-medium text-foreground">Saldo Restante</span>
+                      <span className="text-income font-bold">{formatCurrency(linkedIncomesInfo.totalRemainingBalance)}</span>
                     </div>
                   </div>
                 </div>
