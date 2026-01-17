@@ -19,6 +19,8 @@ interface AuthContextType {
   signup: (email: string, password: string, displayName: string) => Promise<{ error: Error | null }>;
   logout: () => Promise<void>;
   updateDisplayName: (displayName: string) => Promise<{ error: Error | null }>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -133,6 +135,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null };
   };
 
+  const resetPassword = async (email: string): Promise<{ error: Error | null }> => {
+    const redirectUrl = `${window.location.origin}/auth/reset-password`;
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
+    });
+
+    if (error) {
+      return { error };
+    }
+
+    return { error: null };
+  };
+
+  const updatePassword = async (newPassword: string): Promise<{ error: Error | null }> => {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) {
+      return { error };
+    }
+
+    return { error: null };
+  };
+
   return (
     <AuthContext.Provider 
       value={{ 
@@ -144,7 +172,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login, 
         signup,
         logout, 
-        updateDisplayName 
+        updateDisplayName,
+        resetPassword,
+        updatePassword,
       }}
     >
       {children}

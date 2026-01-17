@@ -1,21 +1,24 @@
 import { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Wallet, Mail, Lock, ArrowRight, Loader2, User } from 'lucide-react';
+import { Wallet, Mail, Lock, ArrowRight, Loader2, User, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { loginSchema, signupSchema } from '@/lib/validation';
+import { loginSchema, signupSchema, resetPasswordSchema } from '@/lib/validation';
+
+type AuthMode = 'login' | 'signup' | 'forgot-password';
 
 export default function AuthPage() {
-  const [isSignup, setIsSignup] = useState(false);
+  const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const { login, signup, isAuthenticated, isLoading: authLoading } = useAuth();
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const { login, signup, resetPassword, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   if (authLoading) {
@@ -36,9 +39,37 @@ export default function AuthPage() {
     e.preventDefault();
     clearErrors();
 
+    if (mode === 'forgot-password') {
+      const validation = resetPasswordSchema.safeParse({ email });
+      
+      if (!validation.success) {
+        const fieldErrors: Record<string, string> = {};
+        validation.error.errors.forEach((err) => {
+          if (err.path[0]) {
+            fieldErrors[err.path[0] as string] = err.message;
+          }
+        });
+        setErrors(fieldErrors);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const { error } = await resetPassword(email);
+        if (error) {
+          toast.error(error.message || 'Error al enviar el email');
+          return;
+        }
+        setResetEmailSent(true);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
     // Validate with Zod
-    const schema = isSignup ? signupSchema : loginSchema;
-    const formData = isSignup 
+    const schema = mode === 'signup' ? signupSchema : loginSchema;
+    const formData = mode === 'signup' 
       ? { email, password, displayName }
       : { email, password };
     
@@ -57,7 +88,7 @@ export default function AuthPage() {
 
     setIsLoading(true);
     try {
-      if (isSignup) {
+      if (mode === 'signup') {
         const { error } = await signup(email, password, displayName.trim());
         if (error) {
           // Handle specific error messages
@@ -87,6 +118,45 @@ export default function AuthPage() {
       setIsLoading(false);
     }
   };
+
+  const switchMode = (newMode: AuthMode) => {
+    setMode(newMode);
+    clearErrors();
+    setResetEmailSent(false);
+  };
+
+  // Success screen for password reset email sent
+  if (resetEmailSent) {
+    return (
+      <div className="min-h-screen flex bg-background">
+        <div className="flex-1 flex items-center justify-center p-8">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-md text-center"
+          >
+            <div className="w-16 h-16 rounded-full bg-income/10 flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-8 h-8 text-income" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">
+              ¡Email enviado!
+            </h2>
+            <p className="text-muted-foreground mb-8">
+              Si existe una cuenta con el email <strong>{email}</strong>, recibirás un enlace para restablecer tu contraseña.
+            </p>
+            <Button
+              onClick={() => switchMode('login')}
+              variant="outline"
+              className="w-full h-12"
+            >
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Volver al inicio de sesión
+            </Button>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex bg-background">
@@ -152,15 +222,23 @@ export default function AuthPage() {
 
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground">
-              {isSignup ? 'Crear cuenta' : 'Bienvenido de nuevo'}
+              {mode === 'signup' 
+                ? 'Crear cuenta' 
+                : mode === 'forgot-password' 
+                  ? 'Recuperar contraseña' 
+                  : 'Bienvenido de nuevo'}
             </h2>
             <p className="text-muted-foreground mt-2">
-              {isSignup ? 'Ingresa tus datos para registrarte' : 'Ingresa tus datos para continuar'}
+              {mode === 'signup' 
+                ? 'Ingresa tus datos para registrarte' 
+                : mode === 'forgot-password'
+                  ? 'Te enviaremos un enlace para restablecer tu contraseña'
+                  : 'Ingresa tus datos para continuar'}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {isSignup && (
+            {mode === 'signup' && (
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
                   Nombre de Usuario
@@ -218,33 +296,47 @@ export default function AuthPage() {
               )}
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                Contraseña
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (errors.password) clearErrors();
-                  }}
-                  className="pl-11 h-12 bg-secondary/50 border-border focus:border-primary"
-                />
+            {mode !== 'forgot-password' && (
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  Contraseña
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (errors.password) clearErrors();
+                    }}
+                    className="pl-11 h-12 bg-secondary/50 border-border focus:border-primary"
+                  />
+                </div>
+                {errors.password && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-sm text-destructive mt-2"
+                  >
+                    {errors.password}
+                  </motion.p>
+                )}
               </div>
-              {errors.password && (
-                <motion.p
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-sm text-destructive mt-2"
+            )}
+
+            {mode === 'login' && (
+              <div className="flex items-center justify-end">
+                <button 
+                  type="button" 
+                  onClick={() => switchMode('forgot-password')}
+                  className="text-sm text-primary hover:underline"
                 >
-                  {errors.password}
-                </motion.p>
-              )}
-            </div>
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
+            )}
 
             <Button
               type="submit"
@@ -254,29 +346,44 @@ export default function AuthPage() {
               {isLoading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  {isSignup ? 'Creando cuenta...' : 'Ingresando...'}
+                  {mode === 'signup' 
+                    ? 'Creando cuenta...' 
+                    : mode === 'forgot-password'
+                      ? 'Enviando...'
+                      : 'Ingresando...'}
                 </>
               ) : (
                 <>
-                  {isSignup ? 'Crear cuenta' : 'Ingresar'}
+                  {mode === 'signup' 
+                    ? 'Crear cuenta' 
+                    : mode === 'forgot-password'
+                      ? 'Enviar enlace'
+                      : 'Ingresar'}
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}
             </Button>
           </form>
 
-          <p className="text-center text-muted-foreground mt-8">
-            {isSignup ? '¿Ya tienes cuenta?' : '¿No tienes cuenta?'}{' '}
-            <button 
-              onClick={() => {
-                setIsSignup(!isSignup);
-                clearErrors();
-              }}
-              className="text-primary hover:underline font-medium"
+          {mode === 'forgot-password' ? (
+            <button
+              onClick={() => switchMode('login')}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground mt-8 mx-auto"
             >
-              {isSignup ? 'Inicia sesión' : 'Regístrate gratis'}
+              <ArrowLeft className="w-4 h-4" />
+              Volver al inicio de sesión
             </button>
-          </p>
+          ) : (
+            <p className="text-center text-muted-foreground mt-8">
+              {mode === 'signup' ? '¿Ya tienes cuenta?' : '¿No tienes cuenta?'}{' '}
+              <button 
+                onClick={() => switchMode(mode === 'signup' ? 'login' : 'signup')}
+                className="text-primary hover:underline font-medium"
+              >
+                {mode === 'signup' ? 'Inicia sesión' : 'Regístrate gratis'}
+              </button>
+            </p>
+          )}
         </div>
       </motion.div>
     </div>

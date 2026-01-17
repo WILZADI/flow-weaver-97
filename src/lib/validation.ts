@@ -58,6 +58,27 @@ export const profileSchema = z.object({
     .max(50, 'El nombre es demasiado largo'),
 });
 
+// Password reset request schema
+export const resetPasswordSchema = z.object({
+  email: z.string()
+    .trim()
+    .min(1, 'El email es requerido')
+    .email('Por favor ingresa un email válido')
+    .max(255, 'El email es demasiado largo'),
+});
+
+// New password schema
+export const newPasswordSchema = z.object({
+  password: z.string()
+    .min(6, 'La contraseña debe tener al menos 6 caracteres')
+    .max(100, 'La contraseña es demasiado larga'),
+  confirmPassword: z.string()
+    .min(1, 'Confirma tu contraseña'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'Las contraseñas no coinciden',
+  path: ['confirmPassword'],
+});
+
 // Type exports for use in components
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type SignupFormData = z.infer<typeof signupSchema>;
