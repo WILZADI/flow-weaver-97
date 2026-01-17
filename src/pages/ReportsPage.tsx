@@ -6,11 +6,13 @@ import {
   Cell,
   ResponsiveContainer,
   Tooltip,
-  AreaChart,
-  Area,
   XAxis,
   YAxis,
   CartesianGrid,
+  ComposedChart,
+  Bar,
+  Line,
+  Legend,
 } from 'recharts';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -263,17 +265,11 @@ export default function ReportsPage() {
               className="kpi-card"
             >
               <h3 className="text-lg font-semibold text-foreground mb-6">
-                Ahorro Acumulado - {annualReportYear}
+                Resumen Financiero Anual - {annualReportYear}
               </h3>
-              <div className="h-[350px]">
+              <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={annualSavingsData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="savingsGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
+                  <ComposedChart data={annualSavingsData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(217, 33%, 17%)" vertical={false} />
                     <XAxis 
                       dataKey="month" 
@@ -282,10 +278,20 @@ export default function ReportsPage() {
                       tickLine={false}
                     />
                     <YAxis 
+                      yAxisId="left"
                       tick={{ fill: 'hsl(215, 20%, 55%)', fontSize: 12 }}
                       axisLine={false}
                       tickLine={false}
                       tickFormatter={(value) => formatCompactCurrency(value)}
+                    />
+                    <YAxis 
+                      yAxisId="right"
+                      orientation="right"
+                      tick={{ fill: 'hsl(215, 20%, 55%)', fontSize: 12 }}
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(value) => `${value}%`}
+                      domain={[0, 100]}
                     />
                     <Tooltip 
                       contentStyle={{
@@ -294,18 +300,58 @@ export default function ReportsPage() {
                         borderRadius: '8px',
                       }}
                       labelStyle={{ color: 'hsl(210, 40%, 98%)' }}
-                      formatter={(value: number) => [formatCurrency(value), 'Ahorro Acumulado']}
+                      formatter={(value: number, name: string) => {
+                        if (name === 'Tasa de Ahorro') return [`${value}%`, name];
+                        return [formatCurrency(value), name];
+                      }}
                     />
-                    <Area
-                      type="monotone"
-                      dataKey="cumulativeSavings"
-                      name="Ahorro Acumulado"
-                      stroke="hsl(217, 91%, 60%)"
+                    <Legend 
+                      wrapperStyle={{ paddingTop: '20px' }}
+                      formatter={(value) => {
+                        const colorMap: Record<string, string> = {
+                          'Ingresos': 'hsl(142, 76%, 36%)',
+                          'Gastos': 'hsl(0, 72%, 51%)',
+                          'Ahorro': 'hsl(217, 91%, 60%)',
+                          'Tasa de Ahorro': 'hsl(263, 70%, 50%)',
+                        };
+                        return <span style={{ color: colorMap[value] || 'hsl(215, 20%, 55%)' }}>{value}</span>;
+                      }}
+                    />
+                    <Bar 
+                      yAxisId="left"
+                      dataKey="income" 
+                      name="Ingresos" 
+                      fill="hsl(142, 76%, 36%)" 
+                      radius={[4, 4, 0, 0]}
+                      barSize={20}
+                    />
+                    <Bar 
+                      yAxisId="left"
+                      dataKey="expenses" 
+                      name="Gastos" 
+                      fill="hsl(0, 72%, 51%)" 
+                      radius={[4, 4, 0, 0]}
+                      barSize={20}
+                    />
+                    <Bar 
+                      yAxisId="left"
+                      dataKey="balance" 
+                      name="Ahorro" 
+                      fill="hsl(217, 91%, 60%)" 
+                      radius={[4, 4, 0, 0]}
+                      barSize={20}
+                    />
+                    <Line 
+                      yAxisId="right"
+                      type="monotone" 
+                      dataKey="savingsRate" 
+                      name="Tasa de Ahorro"
+                      stroke="hsl(263, 70%, 50%)" 
                       strokeWidth={3}
-                      fillOpacity={1}
-                      fill="url(#savingsGradient)"
+                      dot={{ fill: 'hsl(263, 70%, 50%)', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, fill: 'hsl(263, 70%, 50%)' }}
                     />
-                  </AreaChart>
+                  </ComposedChart>
                 </ResponsiveContainer>
               </div>
             </motion.div>

@@ -75,7 +75,14 @@ export function CashFlowChart({ data, selectedMonth }: CashFlowChartProps) {
             <Tooltip content={<CustomTooltip />} />
             <Legend
               wrapperStyle={{ paddingTop: '20px' }}
-              formatter={(value) => <span className="text-muted-foreground">{value}</span>}
+              formatter={(value) => {
+                const colorMap: Record<string, string> = {
+                  'Ingresos': 'hsl(142, 76%, 36%)',
+                  'Gastos': 'hsl(0, 72%, 51%)',
+                  'Balance': 'hsl(217, 91%, 60%)',
+                };
+                return <span style={{ color: colorMap[value] || 'hsl(215, 20%, 55%)' }}>{value}</span>;
+              }}
             />
             <Bar 
               dataKey="income" 

@@ -49,25 +49,25 @@ export function KPICard({ title, value, icon: Icon, variant, trend, delay = 0 }:
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay }}
-      className={variantStyles[variant]}
+      className={cn(variantStyles[variant], "p-4 lg:p-5")}
     >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground font-medium">{title}</p>
-          <h3 className={cn("text-2xl lg:text-3xl font-bold mt-2", valueColorStyles[variant])}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs lg:text-sm text-muted-foreground font-medium truncate">{title}</p>
+          <h3 className={cn("text-lg lg:text-2xl font-bold mt-1", valueColorStyles[variant])}>
             {formatCurrency(value)}
           </h3>
           {trend && (
             <p className={cn(
-              "text-sm mt-2 font-medium",
+              "text-xs mt-1.5 font-medium",
               trend.isPositive ? "text-income" : "text-expense"
             )}>
               {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}% vs mes anterior
             </p>
           )}
         </div>
-        <div className={cn("p-3 rounded-xl", iconBgStyles[variant])}>
-          <Icon className={cn("w-6 h-6", iconColorStyles[variant])} />
+        <div className={cn("p-2 lg:p-2.5 rounded-lg shrink-0", iconBgStyles[variant])}>
+          <Icon className={cn("w-4 h-4 lg:w-5 lg:h-5", iconColorStyles[variant])} />
         </div>
       </div>
     </motion.div>
