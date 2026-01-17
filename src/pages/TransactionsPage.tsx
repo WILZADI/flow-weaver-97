@@ -39,6 +39,8 @@ import {
 import { toast } from 'sonner';
 import { categories } from '@/data/mockData';
 import { cn } from '@/lib/utils';
+import { Transaction } from '@/types/finance';
+import { LinkExpenseModal } from '@/components/transactions/LinkExpenseModal';
 
 export default function TransactionsPage() {
   const { transactions, addTransaction, deleteTransaction, togglePending } = useFinance();
@@ -46,6 +48,8 @@ export default function TransactionsPage() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [linkModalOpen, setLinkModalOpen] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState<Transaction | null>(null);
   const [newTransaction, setNewTransaction] = useState({
     type: 'expense' as 'income' | 'expense',
     amount: '',
@@ -53,6 +57,11 @@ export default function TransactionsPage() {
     category: '',
     date: new Date().toISOString().split('T')[0],
   });
+
+  const openLinkModal = (expense: Transaction) => {
+    setSelectedExpense(expense);
+    setLinkModalOpen(true);
+  };
 
   const filteredTransactions = transactions.filter(t => {
     const matchesSearch = t.description.toLowerCase().includes(search.toLowerCase()) ||
@@ -313,9 +322,11 @@ export default function TransactionsPage() {
                           <DropdownMenuItem className="gap-2">
                             <Edit className="w-4 h-4" /> Editar
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2">
-                            <Link2 className="w-4 h-4" /> Vincular
-                          </DropdownMenuItem>
+                          {transaction.type === 'expense' && (
+                            <DropdownMenuItem className="gap-2" onClick={() => openLinkModal(transaction)}>
+                              <Link2 className="w-4 h-4" /> Vincular
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem 
                             className="gap-2 text-destructive focus:text-destructive"
                             onClick={() => handleDelete(transaction.id)}
@@ -366,15 +377,20 @@ export default function TransactionsPage() {
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem className="gap-2">
-                        <Edit className="w-4 h-4" /> Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        className="gap-2 text-destructive"
-                        onClick={() => handleDelete(transaction.id)}
-                      >
-                        <Trash2 className="w-4 h-4" /> Eliminar
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem className="gap-2">
+                          <Edit className="w-4 h-4" /> Editar
+                        </DropdownMenuItem>
+                        {transaction.type === 'expense' && (
+                          <DropdownMenuItem className="gap-2" onClick={() => openLinkModal(transaction)}>
+                            <Link2 className="w-4 h-4" /> Vincular
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem 
+                          className="gap-2 text-destructive"
+                          onClick={() => handleDelete(transaction.id)}
+                        >
+                          <Trash2 className="w-4 h-4" /> Eliminar
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -401,6 +417,16 @@ export default function TransactionsPage() {
             ))}
           </AnimatePresence>
         </div>
+
+        {/* Link Expense Modal */}
+        <LinkExpenseModal
+          expense={selectedExpense}
+          open={linkModalOpen}
+          onOpenChange={(open) => {
+            setLinkModalOpen(open);
+            if (!open) setSelectedExpense(null);
+          }}
+        />
       </div>
     </AppLayout>
   );
