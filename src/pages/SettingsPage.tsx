@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, DollarSign, Bell, LogOut } from 'lucide-react';
+import { User, DollarSign, Bell, LogOut, Loader2 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
@@ -14,17 +14,48 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { profileSchema } from '@/lib/validation';
 
 export default function SettingsPage() {
-  const { user, logout, updateDisplayName } = useAuth();
-  const [name, setName] = useState(user?.displayName || user?.name || '');
+  const { user, profile, logout, updateDisplayName, isLoading: authLoading } = useAuth();
+  const [name, setName] = useState(profile?.display_name || '');
   const [currency, setCurrency] = useState('COP');
   const [notifications, setNotifications] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSave = () => {
-    updateDisplayName(name);
-    toast.success('Configuración guardada correctamente');
+  const handleSave = async () => {
+    setError('');
+    
+    // Validate with Zod
+    const validation = profileSchema.safeParse({ displayName: name });
+    if (!validation.success) {
+      setError(validation.error.errors[0].message);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { error } = await updateDisplayName(name.trim());
+      if (error) {
+        toast.error('Error al guardar los cambios');
+        return;
+      }
+      toast.success('Configuración guardada correctamente');
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (authLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -56,9 +87,21 @@ export default function SettingsPage() {
                 </label>
                 <Input
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (error) setError('');
+                  }}
                   className="h-12 bg-background"
                 />
+                {error && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-sm text-destructive mt-2"
+                  >
+                    {error}
+                  </motion.p>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
@@ -130,9 +173,17 @@ export default function SettingsPage() {
           <div className="flex flex-col sm:flex-row gap-4">
             <Button 
               onClick={handleSave}
+              disabled={isSaving}
               className="flex-1 h-12 bg-primary hover:bg-primary/90"
             >
-              Guardar Cambios
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                  Guardando...
+                </>
+              ) : (
+                'Guardar Cambios'
+              )}
             </Button>
             <Button 
               variant="outline"

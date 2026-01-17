@@ -6,51 +6,83 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { loginSchema, signupSchema } from '@/lib/validation';
 
-export default function LoginPage() {
+export default function AuthPage() {
+  const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [emailError, setEmailError] = useState('');
-  const { login, isAuthenticated } = useAuth();
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const { login, signup, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+  const clearErrors = () => setErrors({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setEmailError('');
+    clearErrors();
 
-    if (!displayName.trim()) {
-      toast.error('Por favor ingresa tu nombre');
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      setEmailError('Por favor ingresa un email válido');
-      return;
-    }
-
-    if (password.length < 6) {
-      toast.error('La contraseña debe tener al menos 6 caracteres');
+    // Validate with Zod
+    const schema = isSignup ? signupSchema : loginSchema;
+    const formData = isSignup 
+      ? { email, password, displayName }
+      : { email, password };
+    
+    const validation = schema.safeParse(formData);
+    
+    if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      validation.error.errors.forEach((err) => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0] as string] = err.message;
+        }
+      });
+      setErrors(fieldErrors);
       return;
     }
 
     setIsLoading(true);
     try {
-      await login(email, password, displayName.trim());
-      toast.success(`¡Bienvenido, ${displayName.trim()}!`);
-      navigate('/dashboard');
-    } catch (error) {
-      toast.error('Error al iniciar sesión');
+      if (isSignup) {
+        const { error } = await signup(email, password, displayName.trim());
+        if (error) {
+          // Handle specific error messages
+          if (error.message.includes('already registered')) {
+            toast.error('Este email ya está registrado. Intenta iniciar sesión.');
+          } else {
+            toast.error(error.message || 'Error al crear la cuenta');
+          }
+          return;
+        }
+        toast.success(`¡Bienvenido, ${displayName.trim()}! Tu cuenta ha sido creada.`);
+        navigate('/dashboard');
+      } else {
+        const { error } = await login(email, password);
+        if (error) {
+          if (error.message.includes('Invalid login credentials')) {
+            toast.error('Email o contraseña incorrectos');
+          } else {
+            toast.error(error.message || 'Error al iniciar sesión');
+          }
+          return;
+        }
+        toast.success('¡Bienvenido de nuevo!');
+        navigate('/dashboard');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -119,26 +151,44 @@ export default function LoginPage() {
           </div>
 
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-foreground">Bienvenido de nuevo</h2>
-            <p className="text-muted-foreground mt-2">Ingresa tus datos para continuar</p>
+            <h2 className="text-2xl font-bold text-foreground">
+              {isSignup ? 'Crear cuenta' : 'Bienvenido de nuevo'}
+            </h2>
+            <p className="text-muted-foreground mt-2">
+              {isSignup ? 'Ingresa tus datos para registrarte' : 'Ingresa tus datos para continuar'}
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                Nombre de Usuario
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Tu nombre"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  className="pl-11 h-12 bg-secondary/50 border-border focus:border-primary"
-                />
+            {isSignup && (
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  Nombre de Usuario
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Tu nombre"
+                    value={displayName}
+                    onChange={(e) => {
+                      setDisplayName(e.target.value);
+                      if (errors.displayName) clearErrors();
+                    }}
+                    className="pl-11 h-12 bg-secondary/50 border-border focus:border-primary"
+                  />
+                </div>
+                {errors.displayName && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-sm text-destructive mt-2"
+                  >
+                    {errors.displayName}
+                  </motion.p>
+                )}
               </div>
-            </div>
+            )}
 
             <div>
               <label className="text-sm font-medium text-foreground mb-2 block">
@@ -152,18 +202,18 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
-                    if (emailError) setEmailError('');
+                    if (errors.email) clearErrors();
                   }}
                   className="pl-11 h-12 bg-secondary/50 border-border focus:border-primary"
                 />
               </div>
-              {emailError && (
+              {errors.email && (
                 <motion.p
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="text-sm text-destructive mt-2"
                 >
-                  {emailError}
+                  {errors.email}
                 </motion.p>
               )}
             </div>
@@ -178,20 +228,22 @@ export default function LoginPage() {
                   type="password"
                   placeholder="••••••••"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errors.password) clearErrors();
+                  }}
                   className="pl-11 h-12 bg-secondary/50 border-border focus:border-primary"
                 />
               </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
-                <input type="checkbox" className="rounded border-border" />
-                Recordarme
-              </label>
-              <button type="button" className="text-sm text-primary hover:underline">
-                ¿Olvidaste tu contraseña?
-              </button>
+              {errors.password && (
+                <motion.p
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-sm text-destructive mt-2"
+                >
+                  {errors.password}
+                </motion.p>
+              )}
             </div>
 
             <Button
@@ -202,11 +254,11 @@ export default function LoginPage() {
               {isLoading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Ingresando...
+                  {isSignup ? 'Creando cuenta...' : 'Ingresando...'}
                 </>
               ) : (
                 <>
-                  Ingresar
+                  {isSignup ? 'Crear cuenta' : 'Ingresar'}
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}
@@ -214,9 +266,15 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center text-muted-foreground mt-8">
-            ¿No tienes cuenta?{' '}
-            <button className="text-primary hover:underline font-medium">
-              Regístrate gratis
+            {isSignup ? '¿Ya tienes cuenta?' : '¿No tienes cuenta?'}{' '}
+            <button 
+              onClick={() => {
+                setIsSignup(!isSignup);
+                clearErrors();
+              }}
+              className="text-primary hover:underline font-medium"
+            >
+              {isSignup ? 'Inicia sesión' : 'Regístrate gratis'}
             </button>
           </p>
         </div>
