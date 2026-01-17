@@ -10,7 +10,10 @@ import {
   MoreVertical,
   Trash2,
   Edit,
-  Clock
+  Clock,
+  Download,
+  FileSpreadsheet,
+  FileText
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { MonthYearSelector } from '@/components/shared/MonthYearSelector';
@@ -55,6 +58,12 @@ import { cn } from '@/lib/utils';
 import { Transaction } from '@/types/finance';
 import { LinkExpenseModal } from '@/components/transactions/LinkExpenseModal';
 import { formatCurrency } from '@/lib/currency';
+import { exportToExcel, exportToPDF } from '@/lib/exportUtils';
+
+const MONTHS = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+];
 
 export default function TransactionsPage() {
   const { 
@@ -204,13 +213,57 @@ export default function TransactionsPage() {
               <p className="text-muted-foreground mt-1">Gestiona tus ingresos y gastos</p>
             </div>
             
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-2 bg-primary hover:bg-primary/90">
-                  <Plus className="w-5 h-5" />
-                  Nueva Transacción
-                </Button>
-              </DialogTrigger>
+            <div className="flex items-center gap-2">
+              {/* Export Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Download className="w-4 h-4" />
+                    Exportar
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem 
+                    className="gap-2"
+                    onClick={() => {
+                      const period = showAllMonths 
+                        ? `${selectedYear}` 
+                        : `${MONTHS[selectedMonth]}_${selectedYear}`;
+                      exportToExcel(filteredTransactions, `transacciones_${period}`);
+                      toast.success('Archivo Excel generado correctamente');
+                    }}
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                    Exportar a Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="gap-2"
+                    onClick={() => {
+                      const period = showAllMonths 
+                        ? `Año ${selectedYear}` 
+                        : `${MONTHS[selectedMonth]} ${selectedYear}`;
+                      exportToPDF(
+                        filteredTransactions, 
+                        `transacciones_${period.replace(' ', '_')}`,
+                        `Reporte de Transacciones - ${period}`
+                      );
+                      toast.success('Archivo PDF generado correctamente');
+                    }}
+                  >
+                    <FileText className="w-4 h-4 text-red-600" />
+                    Exportar a PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* New Transaction Button */}
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2 bg-primary hover:bg-primary/90">
+                    <Plus className="w-5 h-5" />
+                    Nueva Transacción
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="sm:max-w-md bg-card border-border">
                 <DialogHeader>
                   <DialogTitle>Nueva Transacción</DialogTitle>
@@ -314,6 +367,7 @@ export default function TransactionsPage() {
                 </div>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
 
           {/* Month Year Selector */}
