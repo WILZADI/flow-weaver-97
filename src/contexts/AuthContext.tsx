@@ -1,59 +1,152 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
-interface User {
+interface Profile {
   id: string;
-  email: string;
-  name: string;
-  displayName?: string;
+  display_name: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface AuthContextType {
   user: User | null;
+  session: Session | null;
+  profile: Profile | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string, displayName?: string) => Promise<boolean>;
-  logout: () => void;
-  updateDisplayName: (displayName: string) => void;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signup: (email: string, password: string, displayName: string) => Promise<{ error: Error | null }>;
+  logout: () => Promise<void>;
+  updateDisplayName: (displayName: string) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const stored = localStorage.getItem('financeUser');
-    return stored ? JSON.parse(stored) : null;
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = async (email: string, _password: string, displayName?: string): Promise<boolean> => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const newUser = {
-      id: '1',
-      email,
-      name: email.split('@')[0],
-      displayName: displayName || email.split('@')[0],
-    };
-    
-    setUser(newUser);
-    localStorage.setItem('financeUser', JSON.stringify(newUser));
-    return true;
-  };
+  useEffect(() => {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        // Defer profile fetch with setTimeout to avoid deadlock
+        if (session?.user) {
+          setTimeout(() => {
+            fetchProfile(session.user.id);
+          }, 0);
+        } else {
+          setProfile(null);
+        }
+      }
+    );
 
-  const updateDisplayName = (displayName: string) => {
-    if (user) {
-      const updatedUser = { ...user, displayName };
-      setUser(updatedUser);
-      localStorage.setItem('financeUser', JSON.stringify(updatedUser));
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      }
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchProfile = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (!error && data) {
+      setProfile(data);
     }
   };
 
-  const logout = () => {
+  const login = async (email: string, password: string): Promise<{ error: Error | null }> => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      return { error };
+    }
+
+    return { error: null };
+  };
+
+  const signup = async (email: string, password: string, displayName: string): Promise<{ error: Error | null }> => {
+    const redirectUrl = `${window.location.origin}/`;
+    
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: {
+          display_name: displayName,
+        },
+      },
+    });
+
+    if (error) {
+      return { error };
+    }
+
+    return { error: null };
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem('financeUser');
+    setSession(null);
+    setProfile(null);
+  };
+
+  const updateDisplayName = async (displayName: string): Promise<{ error: Error | null }> => {
+    if (!user) {
+      return { error: new Error('No user logged in') };
+    }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ display_name: displayName })
+      .eq('id', user.id);
+
+    if (error) {
+      return { error };
+    }
+
+    // Refresh profile data
+    await fetchProfile(user.id);
+    return { error: null };
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, updateDisplayName }}>
+    <AuthContext.Provider 
+      value={{ 
+        user, 
+        session,
+        profile,
+        isAuthenticated: !!session, 
+        isLoading,
+        login, 
+        signup,
+        logout, 
+        updateDisplayName 
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

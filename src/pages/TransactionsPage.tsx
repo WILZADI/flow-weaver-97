@@ -13,7 +13,8 @@ import {
   Clock,
   Download,
   FileSpreadsheet,
-  FileText
+  FileText,
+  Loader2
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { MonthYearSelector } from '@/components/shared/MonthYearSelector';
@@ -59,6 +60,7 @@ import { Transaction } from '@/types/finance';
 import { LinkExpenseModal } from '@/components/transactions/LinkExpenseModal';
 import { formatCurrency } from '@/lib/currency';
 import { exportToExcel, exportToPDF } from '@/lib/exportUtils';
+import { transactionSchema } from '@/lib/validation';
 
 const MONTHS = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -98,6 +100,8 @@ export default function TransactionsPage() {
     date: new Date().toISOString().split('T')[0],
     isPending: false,
   });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isSaving, setIsSaving] = useState(false);
   const [editForm, setEditForm] = useState({
     type: 'expense' as 'income' | 'expense',
     amount: '',
@@ -125,25 +129,51 @@ export default function TransactionsPage() {
     setIsEditDialogOpen(true);
   };
 
-  const handleEditTransaction = () => {
+  const handleEditTransaction = async () => {
     if (!editingTransaction) return;
-    if (!editForm.amount || !editForm.description || !editForm.category) {
-      toast.error('Por favor completa todos los campos');
-      return;
-    }
+    setFormErrors({});
 
-    updateTransaction(editingTransaction.id, {
+    const amount = parseFloat(editForm.amount);
+    const validation = transactionSchema.safeParse({
       type: editForm.type,
-      amount: parseFloat(editForm.amount),
+      amount: isNaN(amount) ? undefined : amount,
       description: editForm.description,
       category: editForm.category,
       date: editForm.date,
       isPending: editForm.isPending,
     });
 
-    setIsEditDialogOpen(false);
-    setEditingTransaction(null);
-    toast.success('Transacción actualizada correctamente');
+    if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      validation.error.errors.forEach((err) => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0] as string] = err.message;
+        }
+      });
+      setFormErrors(fieldErrors);
+      toast.error(validation.error.errors[0].message);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await updateTransaction(editingTransaction.id, {
+        type: editForm.type,
+        amount: validation.data.amount,
+        description: validation.data.description,
+        category: validation.data.category,
+        date: validation.data.date,
+        isPending: validation.data.isPending,
+      });
+
+      setIsEditDialogOpen(false);
+      setEditingTransaction(null);
+      toast.success('Transacción actualizada correctamente');
+    } catch (error) {
+      toast.error('Error al actualizar la transacción');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Get transactions filtered by month/year
@@ -161,31 +191,57 @@ export default function TransactionsPage() {
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  const handleAddTransaction = () => {
-    if (!newTransaction.amount || !newTransaction.description || !newTransaction.category) {
-      toast.error('Por favor completa todos los campos');
-      return;
-    }
+  const handleAddTransaction = async () => {
+    setFormErrors({});
 
-    addTransaction({
+    const amount = parseFloat(newTransaction.amount);
+    const validation = transactionSchema.safeParse({
       type: newTransaction.type,
-      amount: parseFloat(newTransaction.amount),
+      amount: isNaN(amount) ? undefined : amount,
       description: newTransaction.description,
       category: newTransaction.category,
       date: newTransaction.date,
       isPending: newTransaction.isPending,
     });
 
-    setIsDialogOpen(false);
-    setNewTransaction({
-      type: 'expense',
-      amount: '',
-      description: '',
-      category: '',
-      date: new Date().toISOString().split('T')[0],
-      isPending: false,
-    });
-    toast.success('Transacción agregada correctamente');
+    if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      validation.error.errors.forEach((err) => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0] as string] = err.message;
+        }
+      });
+      setFormErrors(fieldErrors);
+      toast.error(validation.error.errors[0].message);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await addTransaction({
+        type: validation.data.type,
+        amount: validation.data.amount,
+        description: validation.data.description,
+        category: validation.data.category,
+        date: validation.data.date,
+        isPending: validation.data.isPending,
+      });
+
+      setIsDialogOpen(false);
+      setNewTransaction({
+        type: 'expense',
+        amount: '',
+        description: '',
+        category: '',
+        date: new Date().toISOString().split('T')[0],
+        isPending: false,
+      });
+      toast.success('Transacción agregada correctamente');
+    } catch (error) {
+      toast.error('Error al agregar la transacción');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const openDeleteDialog = (transaction: Transaction) => {
@@ -193,12 +249,16 @@ export default function TransactionsPage() {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (transactionToDelete) {
-      deleteTransaction(transactionToDelete.id);
-      toast.success('Transacción eliminada');
-      setDeleteDialogOpen(false);
-      setTransactionToDelete(null);
+      try {
+        await deleteTransaction(transactionToDelete.id);
+        toast.success('Transacción eliminada');
+        setDeleteDialogOpen(false);
+        setTransactionToDelete(null);
+      } catch (error) {
+        toast.error('Error al eliminar la transacción');
+      }
     }
   };
 
