@@ -30,7 +30,6 @@ import {
   SelectGroup,
   SelectItem,
   SelectLabel,
-  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -406,37 +405,35 @@ export default function TransactionsPage() {
                     className="h-12"
                   />
 
-                  <Select
-                    value={newTransaction.category}
-                    onValueChange={(value) => {
-                      if (value === '__add_new__') {
-                        openAddCategoryModal(newTransaction.type);
-                      } else {
-                        setNewTransaction(prev => ({ ...prev, category: value }));
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="h-12">
-                      <SelectValue placeholder="Categoría" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Categorías</SelectLabel>
-                        {getAllCategories(newTransaction.type).map(category => (
-                          <SelectItem key={category.id} value={category.name}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                      <SelectSeparator />
-                      <SelectItem value="__add_new__" className="text-primary">
-                        <span className="flex items-center gap-2">
-                          <PlusCircle className="w-4 h-4" />
-                          Crear nueva categoría
-                        </span>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex gap-2">
+                    <Select
+                      value={newTransaction.category}
+                      onValueChange={(value) => setNewTransaction(prev => ({ ...prev, category: value }))}
+                    >
+                      <SelectTrigger className="h-12 flex-1">
+                        <SelectValue placeholder="Categoría" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Categorías</SelectLabel>
+                          {getAllCategories(newTransaction.type).map(category => (
+                            <SelectItem key={category.id} value={category.name}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-12 w-12 shrink-0"
+                      onClick={() => openAddCategoryModal(newTransaction.type)}
+                    >
+                      <PlusCircle className="w-5 h-5 text-primary" />
+                    </Button>
+                  </div>
 
                   <div className="flex items-center space-x-2">
                     <Checkbox
@@ -797,37 +794,35 @@ export default function TransactionsPage() {
                 className="h-12"
               />
 
-              <Select
-                value={editForm.category}
-                onValueChange={(value) => {
-                  if (value === '__add_new__') {
-                    openAddCategoryModal(editForm.type);
-                  } else {
-                    setEditForm(prev => ({ ...prev, category: value }));
-                  }
-                }}
-              >
-                <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Categoría" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Categorías</SelectLabel>
-                    {getAllCategories(editForm.type).map(category => (
-                      <SelectItem key={category.id} value={category.name}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                  <SelectSeparator />
-                  <SelectItem value="__add_new__" className="text-primary">
-                    <span className="flex items-center gap-2">
-                      <PlusCircle className="w-4 h-4" />
-                      Crear nueva categoría
-                    </span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select
+                  value={editForm.category}
+                  onValueChange={(value) => setEditForm(prev => ({ ...prev, category: value }))}
+                >
+                  <SelectTrigger className="h-12 flex-1">
+                    <SelectValue placeholder="Categoría" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Categorías</SelectLabel>
+                      {getAllCategories(editForm.type).map(category => (
+                        <SelectItem key={category.id} value={category.name}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-12 w-12 shrink-0"
+                  onClick={() => openAddCategoryModal(editForm.type)}
+                >
+                  <PlusCircle className="w-5 h-5 text-primary" />
+                </Button>
+              </div>
 
               <div className="flex items-center space-x-2">
                 <Checkbox
