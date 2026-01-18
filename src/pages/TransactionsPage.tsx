@@ -14,7 +14,8 @@ import {
   Download,
   FileSpreadsheet,
   FileText,
-  Loader2
+  Loader2,
+  PlusCircle
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { MonthYearSelector } from '@/components/shared/MonthYearSelector';
@@ -26,7 +27,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -54,13 +58,14 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { categories } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { Transaction } from '@/types/finance';
 import { LinkExpenseModal } from '@/components/transactions/LinkExpenseModal';
+import { AddCategoryModal } from '@/components/transactions/AddCategoryModal';
 import { formatCurrency } from '@/lib/currency';
 import { exportToExcel, exportToPDF } from '@/lib/exportUtils';
 import { transactionSchema } from '@/lib/validation';
+import { useCustomCategories } from '@/hooks/useCustomCategories';
 
 const MONTHS = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -80,6 +85,8 @@ export default function TransactionsPage() {
     setSelectedYear,
     getFilteredTransactions 
   } = useFinance();
+
+  const { getAllCategories, addCategory } = useCustomCategories();
   
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -87,6 +94,8 @@ export default function TransactionsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
+  const [addCategoryModalOpen, setAddCategoryModalOpen] = useState(false);
+  const [addCategoryType, setAddCategoryType] = useState<'income' | 'expense'>('expense');
   const [selectedExpense, setSelectedExpense] = useState<Transaction | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [showAllMonths, setShowAllMonths] = useState(false);
@@ -110,6 +119,15 @@ export default function TransactionsPage() {
     date: '',
     isPending: false,
   });
+
+  const openAddCategoryModal = (type: 'income' | 'expense') => {
+    setAddCategoryType(type);
+    setAddCategoryModalOpen(true);
+  };
+
+  const handleAddCategory = (name: string, type: 'income' | 'expense') => {
+    addCategory(name, type);
+  };
 
   const openLinkModal = (expense: Transaction) => {
     setSelectedExpense(expense);
@@ -390,19 +408,33 @@ export default function TransactionsPage() {
 
                   <Select
                     value={newTransaction.category}
-                    onValueChange={(value) => setNewTransaction(prev => ({ ...prev, category: value }))}
+                    onValueChange={(value) => {
+                      if (value === '__add_new__') {
+                        openAddCategoryModal(newTransaction.type);
+                      } else {
+                        setNewTransaction(prev => ({ ...prev, category: value }));
+                      }
+                    }}
                   >
                     <SelectTrigger className="h-12">
                       <SelectValue placeholder="Categoría" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories
-                        .filter(c => c.type === newTransaction.type)
-                        .map(category => (
+                      <SelectGroup>
+                        <SelectLabel>Categorías</SelectLabel>
+                        {getAllCategories(newTransaction.type).map(category => (
                           <SelectItem key={category.id} value={category.name}>
                             {category.name}
                           </SelectItem>
                         ))}
+                      </SelectGroup>
+                      <SelectSeparator />
+                      <SelectItem value="__add_new__" className="text-primary">
+                        <span className="flex items-center gap-2">
+                          <PlusCircle className="w-4 h-4" />
+                          Crear nueva categoría
+                        </span>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -767,19 +799,33 @@ export default function TransactionsPage() {
 
               <Select
                 value={editForm.category}
-                onValueChange={(value) => setEditForm(prev => ({ ...prev, category: value }))}
+                onValueChange={(value) => {
+                  if (value === '__add_new__') {
+                    openAddCategoryModal(editForm.type);
+                  } else {
+                    setEditForm(prev => ({ ...prev, category: value }));
+                  }
+                }}
               >
                 <SelectTrigger className="h-12">
                   <SelectValue placeholder="Categoría" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories
-                    .filter(c => c.type === editForm.type)
-                    .map(category => (
+                  <SelectGroup>
+                    <SelectLabel>Categorías</SelectLabel>
+                    {getAllCategories(editForm.type).map(category => (
                       <SelectItem key={category.id} value={category.name}>
                         {category.name}
                       </SelectItem>
                     ))}
+                  </SelectGroup>
+                  <SelectSeparator />
+                  <SelectItem value="__add_new__" className="text-primary">
+                    <span className="flex items-center gap-2">
+                      <PlusCircle className="w-4 h-4" />
+                      Crear nueva categoría
+                    </span>
+                  </SelectItem>
                 </SelectContent>
               </Select>
 
@@ -848,6 +894,15 @@ export default function TransactionsPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Add Category Modal */}
+        <AddCategoryModal
+          open={addCategoryModalOpen}
+          onOpenChange={setAddCategoryModalOpen}
+          type={addCategoryType}
+          onAddCategory={handleAddCategory}
+          existingCategories={getAllCategories().map(c => c.name)}
+        />
       </div>
     </AppLayout>
   );
