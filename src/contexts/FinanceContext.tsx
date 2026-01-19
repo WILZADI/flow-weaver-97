@@ -97,9 +97,10 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   const getFilteredTransactions = useCallback((month?: number, year?: number) => {
     return transactions.filter(t => {
-      const date = new Date(t.date);
-      const matchesYear = year !== undefined ? date.getFullYear() === year : true;
-      const matchesMonth = month !== undefined ? date.getMonth() === month : true;
+      // Parse date without timezone issues - split the YYYY-MM-DD string
+      const [yearStr, monthStr] = t.date.split('-').map(Number);
+      const matchesYear = year !== undefined ? yearStr === year : true;
+      const matchesMonth = month !== undefined ? (monthStr - 1) === month : true;
       return matchesYear && matchesMonth;
     });
   }, [transactions]);

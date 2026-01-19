@@ -277,7 +277,7 @@ export default function TransactionsPage() {
         amount: '',
         description: '',
         category: '',
-        date: new Date().toISOString().split('T')[0],
+        date: getTodayString(),
         isPending: false,
       });
       toast.success('Transacción agregada correctamente');
