@@ -26,7 +26,7 @@ export const exportToExcel = async (
 ) => {
   // Create workbook and worksheet
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'FinanceFlow';
+  workbook.creator = 'Presupuesto Esmeralda';
   workbook.created = new Date();
 
   // Transactions sheet

@@ -176,7 +176,7 @@ export default function AuthPage() {
             <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
               <Wallet className="w-7 h-7 text-primary-foreground" />
             </div>
-            <span className="text-3xl font-bold text-foreground">FinanceFlow</span>
+            <span className="text-3xl font-bold text-foreground">Presupuesto Esmeralda</span>
           </div>
           
           <h1 className="text-4xl xl:text-5xl font-bold text-foreground leading-tight mb-6">
@@ -217,7 +217,7 @@ export default function AuthPage() {
             <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
               <Wallet className="w-6 h-6 text-primary-foreground" />
             </div>
-            <span className="text-2xl font-bold text-foreground">FinanceFlow</span>
+            <span className="text-2xl font-bold text-foreground">Presupuesto Esmeralda</span>
           </div>
 
           <div className="mb-8">
