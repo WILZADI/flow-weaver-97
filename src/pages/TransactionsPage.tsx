@@ -358,7 +358,7 @@ export default function TransactionsPage() {
                         "flex-1",
                         newTransaction.type === 'income' && "bg-income hover:bg-income/90"
                       )}
-                      onClick={() => setNewTransaction(prev => ({ ...prev, type: 'income', category: '' }))}
+                      onClick={() => setNewTransaction(prev => ({ ...prev, type: 'income', category: '', isPending: false }))}
                     >
                       <TrendingUp className="w-4 h-4 mr-2" />
                       Ingreso
@@ -386,24 +386,6 @@ export default function TransactionsPage() {
                       className="h-12"
                     />
                   </div>
-
-                  <div>
-                    <label className="text-sm text-muted-foreground mb-1 block">Monto (COP)</label>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      value={newTransaction.amount}
-                      onChange={(e) => setNewTransaction(prev => ({ ...prev, amount: e.target.value }))}
-                      className="h-12"
-                    />
-                  </div>
-
-                  <Input
-                    placeholder="Descripción"
-                    value={newTransaction.description}
-                    onChange={(e) => setNewTransaction(prev => ({ ...prev, description: e.target.value }))}
-                    className="h-12"
-                  />
 
                   <div className="flex gap-2">
                     <Select
@@ -435,21 +417,41 @@ export default function TransactionsPage() {
                     </Button>
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="isPending"
-                      checked={newTransaction.isPending}
-                      onCheckedChange={(checked) => 
-                        setNewTransaction(prev => ({ ...prev, isPending: checked === true }))
-                      }
+                  <Input
+                    placeholder="Descripción"
+                    value={newTransaction.description}
+                    onChange={(e) => setNewTransaction(prev => ({ ...prev, description: e.target.value }))}
+                    className="h-12"
+                  />
+
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-1 block">Monto (COP)</label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={newTransaction.amount}
+                      onChange={(e) => setNewTransaction(prev => ({ ...prev, amount: e.target.value }))}
+                      className="h-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
-                    <label
-                      htmlFor="isPending"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      Marcar como pendiente
-                    </label>
                   </div>
+
+                  {newTransaction.type === 'expense' && (
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="isPending"
+                        checked={newTransaction.isPending}
+                        onCheckedChange={(checked) => 
+                          setNewTransaction(prev => ({ ...prev, isPending: checked === true }))
+                        }
+                      />
+                      <label
+                        htmlFor="isPending"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Marcar como pendiente
+                      </label>
+                    </div>
+                  )}
 
                   <Button
                     onClick={handleAddTransaction}
@@ -747,7 +749,7 @@ export default function TransactionsPage() {
                     "flex-1",
                     editForm.type === 'income' && "bg-income hover:bg-income/90"
                   )}
-                  onClick={() => setEditForm(prev => ({ ...prev, type: 'income', category: '' }))}
+                  onClick={() => setEditForm(prev => ({ ...prev, type: 'income', category: '', isPending: false }))}
                 >
                   <TrendingUp className="w-4 h-4 mr-2" />
                   Ingreso
@@ -775,24 +777,6 @@ export default function TransactionsPage() {
                   className="h-12"
                 />
               </div>
-
-              <div>
-                <label className="text-sm text-muted-foreground mb-1 block">Monto (COP)</label>
-                <Input
-                  type="number"
-                  placeholder="0"
-                  value={editForm.amount}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, amount: e.target.value }))}
-                  className="h-12"
-                />
-              </div>
-
-              <Input
-                placeholder="Descripción"
-                value={editForm.description}
-                onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
-                className="h-12"
-              />
 
               <div className="flex gap-2">
                 <Select
@@ -824,21 +808,41 @@ export default function TransactionsPage() {
                 </Button>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="editIsPending"
-                  checked={editForm.isPending}
-                  onCheckedChange={(checked) => 
-                    setEditForm(prev => ({ ...prev, isPending: checked === true }))
-                  }
+              <Input
+                placeholder="Descripción"
+                value={editForm.description}
+                onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                className="h-12"
+              />
+
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Monto (COP)</label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={editForm.amount}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, amount: e.target.value }))}
+                  className="h-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
-                <label
-                  htmlFor="editIsPending"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Marcar como pendiente
-                </label>
               </div>
+
+              {editForm.type === 'expense' && (
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="editIsPending"
+                    checked={editForm.isPending}
+                    onCheckedChange={(checked) => 
+                      setEditForm(prev => ({ ...prev, isPending: checked === true }))
+                    }
+                  />
+                  <label
+                    htmlFor="editIsPending"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Marcar como pendiente
+                  </label>
+                </div>
+              )}
 
               <Button
                 onClick={handleEditTransaction}
