@@ -25,6 +25,17 @@ const parseDateString = (dateStr: string): Date => {
   const [year, month, day] = dateStr.split('-').map(Number);
   return new Date(year, month - 1, day);
 };
+
+// Helper function to format date to YYYY-MM-DD without timezone issues
+const formatDateToString = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// Get today's date in local timezone
+const getTodayString = (): string => formatDateToString(new Date());
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { MonthYearSelector } from '@/components/shared/MonthYearSelector';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -119,9 +130,11 @@ export default function TransactionsPage() {
     amount: '',
     description: '',
     category: '',
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayString(),
     isPending: false,
   });
+  const [isNewDatePickerOpen, setIsNewDatePickerOpen] = useState(false);
+  const [isEditDatePickerOpen, setIsEditDatePickerOpen] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -393,7 +406,7 @@ export default function TransactionsPage() {
 
                   <div>
                     <label className="text-sm text-muted-foreground mb-1 block">Fecha</label>
-                    <Popover>
+                    <Popover open={isNewDatePickerOpen} onOpenChange={setIsNewDatePickerOpen}>
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
@@ -417,10 +430,8 @@ export default function TransactionsPage() {
                           selected={newTransaction.date ? parseDateString(newTransaction.date) : undefined}
                           onSelect={(date) => {
                             if (date) {
-                              const year = date.getFullYear();
-                              const month = String(date.getMonth() + 1).padStart(2, '0');
-                              const day = String(date.getDate()).padStart(2, '0');
-                              setNewTransaction(prev => ({ ...prev, date: `${year}-${month}-${day}` }));
+                              setNewTransaction(prev => ({ ...prev, date: formatDateToString(date) }));
+                              setIsNewDatePickerOpen(false);
                             }
                           }}
                           initialFocus
@@ -807,7 +818,7 @@ export default function TransactionsPage() {
 
               <div>
                 <label className="text-sm text-muted-foreground mb-1 block">Fecha</label>
-                <Popover>
+                <Popover open={isEditDatePickerOpen} onOpenChange={setIsEditDatePickerOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -831,10 +842,8 @@ export default function TransactionsPage() {
                       selected={editForm.date ? parseDateString(editForm.date) : undefined}
                       onSelect={(date) => {
                         if (date) {
-                          const year = date.getFullYear();
-                          const month = String(date.getMonth() + 1).padStart(2, '0');
-                          const day = String(date.getDate()).padStart(2, '0');
-                          setEditForm(prev => ({ ...prev, date: `${year}-${month}-${day}` }));
+                          setEditForm(prev => ({ ...prev, date: formatDateToString(date) }));
+                          setIsEditDatePickerOpen(false);
                         }
                       }}
                       initialFocus
