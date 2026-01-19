@@ -621,7 +621,7 @@ export default function TransactionsPage() {
                       </div>
                     </td>
                     <td className="py-4 px-4 text-muted-foreground">
-                      {new Date(transaction.date).toLocaleDateString('es-CO')}
+                      {format(parseDateString(transaction.date), "dd/MM/yyyy")}
                     </td>
                     <td className="py-4 px-4">
                       <button
@@ -762,7 +762,7 @@ export default function TransactionsPage() {
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-muted-foreground">
-                      {new Date(transaction.date).toLocaleDateString('es-CO')}
+                      {format(parseDateString(transaction.date), "dd/MM/yyyy")}
                     </span>
                     {transaction.isPending && (
                       <span className="flex items-center gap-1 text-xs text-pending">
