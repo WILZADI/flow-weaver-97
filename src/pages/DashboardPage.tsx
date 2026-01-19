@@ -78,9 +78,9 @@ export default function DashboardPage() {
     const linkedIncomeIds = new Set(expensesByIncome.keys());
     const linkedIncomes = transactions
       .filter(t => linkedIncomeIds.has(t.id))
-      .map((income, index) => ({
+      .map((income) => ({
         ...income,
-        label: `${income.category} ${index + 1}`,
+        label: income.category,
         expensesLinked: expensesByIncome.get(income.id) || 0,
         remainingBalance: income.amount - (expensesByIncome.get(income.id) || 0),
         linkedExpenses: expenseDetailsByIncome.get(income.id) || [],

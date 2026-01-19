@@ -27,7 +27,6 @@ export function AddCategoryModal({
   existingCategories,
 }: AddCategoryModalProps) {
   const [categoryName, setCategoryName] = useState('');
-  const [categoryType, setCategoryType] = useState<'income' | 'expense'>(type);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
@@ -50,7 +49,7 @@ export function AddCategoryModal({
 
     setIsSubmitting(true);
     try {
-      const result = await onAddCategory(trimmedName, categoryType);
+      const result = await onAddCategory(trimmedName, type);
       if (result) {
         toast.success(`Categoría "${trimmedName}" creada`);
         setCategoryName('');
@@ -72,31 +71,21 @@ export function AddCategoryModal({
           <DialogTitle>Nueva Categoría</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-4">
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant={categoryType === 'income' ? 'default' : 'outline'}
-              className={cn(
-                "flex-1",
-                categoryType === 'income' && "bg-income hover:bg-income/90"
-              )}
-              onClick={() => setCategoryType('income')}
-            >
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Ingreso
-            </Button>
-            <Button
-              type="button"
-              variant={categoryType === 'expense' ? 'default' : 'outline'}
-              className={cn(
-                "flex-1",
-                categoryType === 'expense' && "bg-expense hover:bg-expense/90"
-              )}
-              onClick={() => setCategoryType('expense')}
-            >
-              <TrendingDown className="w-4 h-4 mr-2" />
-              Gasto
-            </Button>
+          <div className={cn(
+            "flex items-center gap-2 px-4 py-3 rounded-lg",
+            type === 'income' ? "bg-income/10" : "bg-expense/10"
+          )}>
+            {type === 'income' ? (
+              <>
+                <TrendingUp className="w-5 h-5 text-income" />
+                <span className="font-medium text-income">Categoría de Ingreso</span>
+              </>
+            ) : (
+              <>
+                <TrendingDown className="w-5 h-5 text-expense" />
+                <span className="font-medium text-expense">Categoría de Gasto</span>
+              </>
+            )}
           </div>
 
           <div>
