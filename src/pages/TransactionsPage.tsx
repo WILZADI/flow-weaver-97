@@ -409,10 +409,14 @@ export default function TransactionsPage() {
                           mode="single"
                           locale={es}
                           selected={newTransaction.date ? parseISO(newTransaction.date) : undefined}
-                          onSelect={(date) => setNewTransaction(prev => ({ 
-                            ...prev, 
-                            date: date ? format(date, 'yyyy-MM-dd') : prev.date 
-                          }))}
+                          onSelect={(date) => {
+                            if (date) {
+                              const year = date.getFullYear();
+                              const month = String(date.getMonth() + 1).padStart(2, '0');
+                              const day = String(date.getDate()).padStart(2, '0');
+                              setNewTransaction(prev => ({ ...prev, date: `${year}-${month}-${day}` }));
+                            }
+                          }}
                           initialFocus
                           className="p-3 pointer-events-auto"
                         />
@@ -819,10 +823,14 @@ export default function TransactionsPage() {
                       mode="single"
                       locale={es}
                       selected={editForm.date ? parseISO(editForm.date) : undefined}
-                      onSelect={(date) => setEditForm(prev => ({ 
-                        ...prev, 
-                        date: date ? format(date, 'yyyy-MM-dd') : prev.date 
-                      }))}
+                      onSelect={(date) => {
+                        if (date) {
+                          const year = date.getFullYear();
+                          const month = String(date.getMonth() + 1).padStart(2, '0');
+                          const day = String(date.getDate()).padStart(2, '0');
+                          setEditForm(prev => ({ ...prev, date: `${year}-${month}-${day}` }));
+                        }
+                      }}
                       initialFocus
                       className="p-3 pointer-events-auto"
                     />
