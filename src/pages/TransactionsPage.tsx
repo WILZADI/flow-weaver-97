@@ -14,8 +14,11 @@ import {
   Download,
   FileSpreadsheet,
   FileText,
-  Loader2
+  Loader2,
+  CalendarIcon
 } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { MonthYearSelector } from '@/components/shared/MonthYearSelector';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -53,6 +56,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Transaction } from '@/types/finance';
@@ -378,12 +387,36 @@ export default function TransactionsPage() {
 
                   <div>
                     <label className="text-sm text-muted-foreground mb-1 block">Fecha</label>
-                    <Input
-                      type="date"
-                      value={newTransaction.date}
-                      onChange={(e) => setNewTransaction(prev => ({ ...prev, date: e.target.value }))}
-                      className="h-12"
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full h-12 justify-start text-left font-normal",
+                            !newTransaction.date && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {newTransaction.date ? (
+                            format(parseISO(newTransaction.date), "PPP", { locale: es })
+                          ) : (
+                            <span>Seleccionar fecha</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={newTransaction.date ? parseISO(newTransaction.date) : undefined}
+                          onSelect={(date) => setNewTransaction(prev => ({ 
+                            ...prev, 
+                            date: date ? format(date, 'yyyy-MM-dd') : prev.date 
+                          }))}
+                          initialFocus
+                          className="p-3 pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   <CategorySelector
@@ -763,12 +796,36 @@ export default function TransactionsPage() {
 
               <div>
                 <label className="text-sm text-muted-foreground mb-1 block">Fecha</label>
-                <Input
-                  type="date"
-                  value={editForm.date}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, date: e.target.value }))}
-                  className="h-12"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full h-12 justify-start text-left font-normal",
+                        !editForm.date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {editForm.date ? (
+                        format(parseISO(editForm.date), "PPP", { locale: es })
+                      ) : (
+                        <span>Seleccionar fecha</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={editForm.date ? parseISO(editForm.date) : undefined}
+                      onSelect={(date) => setEditForm(prev => ({ 
+                        ...prev, 
+                        date: date ? format(date, 'yyyy-MM-dd') : prev.date 
+                      }))}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <CategorySelector
