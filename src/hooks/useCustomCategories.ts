@@ -44,10 +44,8 @@ export function useCustomCategories() {
     fetchCategories();
   }, [fetchCategories]);
 
-  const addCategory = async (name: string, type: 'income' | 'expense'): Promise<Category | null> => {
+  const addCategory = async (name: string, type: 'income' | 'expense', icon: string = 'Tag'): Promise<Category | null> => {
     if (!user) return null;
-
-    const icon = type === 'income' ? 'Plus' : 'Tag';
 
     try {
       const { data, error } = await supabase

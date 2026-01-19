@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,12 +10,13 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { IconPicker } from './IconPicker';
 
 interface AddCategoryModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   type: 'income' | 'expense';
-  onAddCategory: (name: string, type: 'income' | 'expense') => Promise<unknown>;
+  onAddCategory: (name: string, type: 'income' | 'expense', icon: string) => Promise<unknown>;
   existingCategories: string[];
 }
 
@@ -27,7 +28,13 @@ export function AddCategoryModal({
   existingCategories,
 }: AddCategoryModalProps) {
   const [categoryName, setCategoryName] = useState('');
+  const [selectedIcon, setSelectedIcon] = useState('Tag');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Reset icon when type changes
+  useEffect(() => {
+    setSelectedIcon(type === 'income' ? 'Wallet' : 'Tag');
+  }, [type]);
 
   const handleSubmit = async () => {
     const trimmedName = categoryName.trim();
@@ -49,10 +56,11 @@ export function AddCategoryModal({
 
     setIsSubmitting(true);
     try {
-      const result = await onAddCategory(trimmedName, type);
+      const result = await onAddCategory(trimmedName, type, selectedIcon);
       if (result) {
         toast.success(`Categoría "${trimmedName}" creada`);
         setCategoryName('');
+        setSelectedIcon(type === 'income' ? 'Wallet' : 'Tag');
         onOpenChange(false);
       } else {
         toast.error('Error al crear la categoría');
@@ -90,21 +98,28 @@ export function AddCategoryModal({
 
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">
-              Nombre de la categoría
+              Icono y nombre
             </label>
-            <Input
-              placeholder="Ej: Entretenimiento"
-              value={categoryName}
-              onChange={(e) => setCategoryName(e.target.value)}
-              className="h-12"
-              maxLength={30}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleSubmit();
-                }
-              }}
-            />
+            <div className="flex gap-2">
+              <IconPicker
+                value={selectedIcon}
+                onChange={setSelectedIcon}
+                type={type}
+              />
+              <Input
+                placeholder="Ej: Entretenimiento"
+                value={categoryName}
+                onChange={(e) => setCategoryName(e.target.value)}
+                className="h-12 flex-1"
+                maxLength={30}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }}
+              />
+            </div>
           </div>
 
           <Button
