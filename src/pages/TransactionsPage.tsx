@@ -59,6 +59,7 @@ import { Transaction } from '@/types/finance';
 import { LinkExpenseModal } from '@/components/transactions/LinkExpenseModal';
 import { AddCategoryModal } from '@/components/transactions/AddCategoryModal';
 import { CategorySelector } from '@/components/transactions/CategorySelector';
+import { CategoryIcon } from '@/components/transactions/IconPicker';
 import { formatCurrency } from '@/lib/currency';
 import { exportToExcel, exportToPDF } from '@/lib/exportUtils';
 import { transactionSchema } from '@/lib/validation';
@@ -555,7 +556,15 @@ export default function TransactionsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 px-4 text-muted-foreground">{transaction.category}</td>
+                    <td className="py-4 px-4">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <CategoryIcon 
+                          iconName={getAllCategories().find(c => c.name === transaction.category)?.icon || 'Tag'} 
+                          className="w-4 h-4" 
+                        />
+                        <span>{transaction.category}</span>
+                      </div>
+                    </td>
                     <td className="py-4 px-4 text-muted-foreground">
                       {new Date(transaction.date).toLocaleDateString('es-CO')}
                     </td>
@@ -638,7 +647,13 @@ export default function TransactionsPage() {
                     </div>
                     <div>
                       <p className="font-medium text-foreground">{transaction.description}</p>
-                      <p className="text-sm text-muted-foreground">{transaction.category}</p>
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <CategoryIcon 
+                          iconName={getAllCategories().find(c => c.name === transaction.category)?.icon || 'Tag'} 
+                          className="w-3.5 h-3.5" 
+                        />
+                        {transaction.category}
+                      </p>
                       {transaction.linkedIncomeIds && transaction.linkedIncomeIds.length > 0 && (
                         <Tooltip>
                           <TooltipTrigger asChild>
