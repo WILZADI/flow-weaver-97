@@ -124,8 +124,8 @@ export default function TransactionsPage() {
     setAddCategoryModalOpen(true);
   };
 
-  const handleAddCategory = (name: string, type: 'income' | 'expense') => {
-    addCategory(name, type);
+  const handleAddCategory = async (name: string, type: 'income' | 'expense') => {
+    return await addCategory(name, type);
   };
 
   const openLinkModal = (expense: Transaction) => {

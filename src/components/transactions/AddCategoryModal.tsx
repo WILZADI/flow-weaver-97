@@ -15,7 +15,7 @@ interface AddCategoryModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   type: 'income' | 'expense';
-  onAddCategory: (name: string, type: 'income' | 'expense') => void;
+  onAddCategory: (name: string, type: 'income' | 'expense') => Promise<unknown>;
   existingCategories: string[];
 }
 
@@ -28,8 +28,9 @@ export function AddCategoryModal({
 }: AddCategoryModalProps) {
   const [categoryName, setCategoryName] = useState('');
   const [categoryType, setCategoryType] = useState<'income' | 'expense'>(type);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const trimmedName = categoryName.trim();
     
     if (!trimmedName) {
@@ -47,10 +48,21 @@ export function AddCategoryModal({
       return;
     }
 
-    onAddCategory(trimmedName, categoryType);
-    toast.success(`Categoría "${trimmedName}" creada`);
-    setCategoryName('');
-    onOpenChange(false);
+    setIsSubmitting(true);
+    try {
+      const result = await onAddCategory(trimmedName, categoryType);
+      if (result) {
+        toast.success(`Categoría "${trimmedName}" creada`);
+        setCategoryName('');
+        onOpenChange(false);
+      } else {
+        toast.error('Error al crear la categoría');
+      }
+    } catch {
+      toast.error('Error al crear la categoría');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -108,9 +120,10 @@ export function AddCategoryModal({
 
           <Button
             onClick={handleSubmit}
+            disabled={isSubmitting}
             className="w-full h-12 bg-primary hover:bg-primary/90"
           >
-            Crear Categoría
+            {isSubmitting ? 'Creando...' : 'Crear Categoría'}
           </Button>
         </div>
       </DialogContent>
