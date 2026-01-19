@@ -17,8 +17,14 @@ import {
   Loader2,
   CalendarIcon
 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+
+// Helper function to parse date string without timezone issues
+const parseDateString = (dateStr: string): Date => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { MonthYearSelector } from '@/components/shared/MonthYearSelector';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -398,7 +404,7 @@ export default function TransactionsPage() {
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
                           {newTransaction.date ? (
-                            format(parseISO(newTransaction.date), "PPP", { locale: es })
+                            format(parseDateString(newTransaction.date), "PPP", { locale: es })
                           ) : (
                             <span>Seleccionar fecha</span>
                           )}
@@ -408,7 +414,7 @@ export default function TransactionsPage() {
                         <Calendar
                           mode="single"
                           locale={es}
-                          selected={newTransaction.date ? parseISO(newTransaction.date) : undefined}
+                          selected={newTransaction.date ? parseDateString(newTransaction.date) : undefined}
                           onSelect={(date) => {
                             if (date) {
                               const year = date.getFullYear();
@@ -812,7 +818,7 @@ export default function TransactionsPage() {
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {editForm.date ? (
-                        format(parseISO(editForm.date), "PPP", { locale: es })
+                        format(parseDateString(editForm.date), "PPP", { locale: es })
                       ) : (
                         <span>Seleccionar fecha</span>
                       )}
@@ -822,7 +828,7 @@ export default function TransactionsPage() {
                     <Calendar
                       mode="single"
                       locale={es}
-                      selected={editForm.date ? parseISO(editForm.date) : undefined}
+                      selected={editForm.date ? parseDateString(editForm.date) : undefined}
                       onSelect={(date) => {
                         if (date) {
                           const year = date.getFullYear();
