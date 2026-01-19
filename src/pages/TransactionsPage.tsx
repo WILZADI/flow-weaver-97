@@ -14,10 +14,8 @@ import {
   Download,
   FileSpreadsheet,
   FileText,
-  Loader2,
-  PlusCircle
+  Loader2
 } from 'lucide-react';
-import { CategoryIcon } from '@/components/transactions/IconPicker';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { MonthYearSelector } from '@/components/shared/MonthYearSelector';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -28,9 +26,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -62,6 +58,7 @@ import { cn } from '@/lib/utils';
 import { Transaction } from '@/types/finance';
 import { LinkExpenseModal } from '@/components/transactions/LinkExpenseModal';
 import { AddCategoryModal } from '@/components/transactions/AddCategoryModal';
+import { CategorySelector } from '@/components/transactions/CategorySelector';
 import { formatCurrency } from '@/lib/currency';
 import { exportToExcel, exportToPDF } from '@/lib/exportUtils';
 import { transactionSchema } from '@/lib/validation';
@@ -86,7 +83,7 @@ export default function TransactionsPage() {
     getFilteredTransactions 
   } = useFinance();
 
-  const { getAllCategories, addCategory } = useCustomCategories();
+  const { getAllCategories, addCategory, deleteCategory, customCategories } = useCustomCategories();
   
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -388,38 +385,15 @@ export default function TransactionsPage() {
                     />
                   </div>
 
-                  <div className="flex gap-2">
-                    <Select
-                      value={newTransaction.category}
-                      onValueChange={(value) => setNewTransaction(prev => ({ ...prev, category: value }))}
-                    >
-                      <SelectTrigger className="h-12 flex-1">
-                        <SelectValue placeholder="Categoría" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Categorías</SelectLabel>
-                          {getAllCategories(newTransaction.type).map(category => (
-                            <SelectItem key={category.id} value={category.name}>
-                              <div className="flex items-center gap-2">
-                                <CategoryIcon iconName={category.icon} className="w-4 h-4" />
-                                <span>{category.name}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="h-12 w-12 shrink-0"
-                      onClick={() => openAddCategoryModal(newTransaction.type)}
-                    >
-                      <PlusCircle className="w-5 h-5 text-primary" />
-                    </Button>
-                  </div>
+                  <CategorySelector
+                    value={newTransaction.category}
+                    onChange={(value) => setNewTransaction(prev => ({ ...prev, category: value }))}
+                    type={newTransaction.type}
+                    allCategories={getAllCategories()}
+                    customCategories={customCategories}
+                    onAddCategory={() => openAddCategoryModal(newTransaction.type)}
+                    onDeleteCategory={deleteCategory}
+                  />
 
                   <Input
                     placeholder="Descripción"
@@ -782,38 +756,15 @@ export default function TransactionsPage() {
                 />
               </div>
 
-              <div className="flex gap-2">
-                <Select
-                  value={editForm.category}
-                  onValueChange={(value) => setEditForm(prev => ({ ...prev, category: value }))}
-                >
-                  <SelectTrigger className="h-12 flex-1">
-                    <SelectValue placeholder="Categoría" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Categorías</SelectLabel>
-                      {getAllCategories(editForm.type).map(category => (
-                        <SelectItem key={category.id} value={category.name}>
-                          <div className="flex items-center gap-2">
-                            <CategoryIcon iconName={category.icon} className="w-4 h-4" />
-                            <span>{category.name}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-12 w-12 shrink-0"
-                  onClick={() => openAddCategoryModal(editForm.type)}
-                >
-                  <PlusCircle className="w-5 h-5 text-primary" />
-                </Button>
-              </div>
+              <CategorySelector
+                value={editForm.category}
+                onChange={(value) => setEditForm(prev => ({ ...prev, category: value }))}
+                type={editForm.type}
+                allCategories={getAllCategories()}
+                customCategories={customCategories}
+                onAddCategory={() => openAddCategoryModal(editForm.type)}
+                onDeleteCategory={deleteCategory}
+              />
 
               <Input
                 placeholder="Descripción"
