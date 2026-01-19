@@ -407,6 +407,7 @@ export default function TransactionsPage() {
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
+                          locale={es}
                           selected={newTransaction.date ? parseISO(newTransaction.date) : undefined}
                           onSelect={(date) => setNewTransaction(prev => ({ 
                             ...prev, 
@@ -816,6 +817,7 @@ export default function TransactionsPage() {
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
+                      locale={es}
                       selected={editForm.date ? parseISO(editForm.date) : undefined}
                       onSelect={(date) => setEditForm(prev => ({ 
                         ...prev, 
