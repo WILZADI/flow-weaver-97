@@ -17,6 +17,7 @@ import {
   Loader2,
   PlusCircle
 } from 'lucide-react';
+import { CategoryIcon } from '@/components/transactions/IconPicker';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { MonthYearSelector } from '@/components/shared/MonthYearSelector';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -124,8 +125,8 @@ export default function TransactionsPage() {
     setAddCategoryModalOpen(true);
   };
 
-  const handleAddCategory = async (name: string, type: 'income' | 'expense') => {
-    return await addCategory(name, type);
+  const handleAddCategory = async (name: string, type: 'income' | 'expense', icon: string) => {
+    return await addCategory(name, type, icon);
   };
 
   const openLinkModal = (expense: Transaction) => {
@@ -400,7 +401,10 @@ export default function TransactionsPage() {
                           <SelectLabel>Categorías</SelectLabel>
                           {getAllCategories(newTransaction.type).map(category => (
                             <SelectItem key={category.id} value={category.name}>
-                              {category.name}
+                              <div className="flex items-center gap-2">
+                                <CategoryIcon iconName={category.icon} className="w-4 h-4" />
+                                <span>{category.name}</span>
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectGroup>
@@ -791,7 +795,10 @@ export default function TransactionsPage() {
                       <SelectLabel>Categorías</SelectLabel>
                       {getAllCategories(editForm.type).map(category => (
                         <SelectItem key={category.id} value={category.name}>
-                          {category.name}
+                          <div className="flex items-center gap-2">
+                            <CategoryIcon iconName={category.icon} className="w-4 h-4" />
+                            <span>{category.name}</span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectGroup>
