@@ -46,7 +46,7 @@ export function Sidebar() {
                 exit={{ opacity: 0, width: 0 }}
                 className="font-bold text-lg text-foreground overflow-hidden whitespace-nowrap"
               >
-                FinanceFlow
+                Presupuesto Esmeralda
               </motion.span>
             )}
           </AnimatePresence>
