@@ -36,7 +36,7 @@ export function AvatarUpload({ userId, currentAvatarUrl, onAvatarChange }: Avata
     setIsUploading(true);
 
     try {
-      // Create a unique file path
+      // Create a unique file path - store just the path, not the signed URL
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/avatar.${fileExt}`;
 
@@ -47,25 +47,24 @@ export function AvatarUpload({ userId, currentAvatarUrl, onAvatarChange }: Avata
 
       if (uploadError) throw uploadError;
 
-      // Get signed URL (1 hour expiration for security)
-      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-        .from('avatars')
-        .createSignedUrl(fileName, 3600);
-
-      if (signedUrlError || !signedUrlData?.signedUrl) throw signedUrlError || new Error('Failed to get signed URL');
-
-      const avatarUrl = signedUrlData.signedUrl;
-
-      // Update profile
+      // Store the file PATH in the database (not the signed URL)
+      // This prevents the URL expiration issue - signed URLs are generated on-demand
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: avatarUrl })
+        .update({ avatar_url: fileName })
         .eq('id', userId);
 
       if (updateError) throw updateError;
 
-      setPreviewUrl(avatarUrl);
-      onAvatarChange(avatarUrl);
+      // Generate a signed URL for immediate preview
+      const { data: signedUrlData } = await supabase.storage
+        .from('avatars')
+        .createSignedUrl(fileName, 3600);
+
+      const previewAvatarUrl = signedUrlData?.signedUrl || null;
+      
+      setPreviewUrl(previewAvatarUrl);
+      onAvatarChange(fileName);
       toast.success('Avatar actualizado correctamente');
     } catch (error) {
       console.error('Error uploading avatar:', error);

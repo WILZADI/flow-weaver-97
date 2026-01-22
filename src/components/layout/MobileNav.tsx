@@ -70,9 +70,9 @@ export function MobileNav() {
               ? "border-primary" 
               : "border-muted-foreground/30"
           )}>
-            {profile?.avatar_url ? (
+            {profile?.resolvedAvatarUrl ? (
               <img
-                src={profile.avatar_url}
+                src={profile.resolvedAvatarUrl}
                 alt="Avatar"
                 className="w-full h-full object-cover"
               />
