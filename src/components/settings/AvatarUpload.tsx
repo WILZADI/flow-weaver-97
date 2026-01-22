@@ -45,24 +45,25 @@ export function AvatarUpload({ userId, currentAvatarUrl, onAvatarChange }: Avata
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
+      // Get signed URL (1 hour expiration for security)
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
         .from('avatars')
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 3600);
 
-      // Add timestamp to bust cache
-      const urlWithTimestamp = `${publicUrl}?t=${Date.now()}`;
+      if (signedUrlError || !signedUrlData?.signedUrl) throw signedUrlError || new Error('Failed to get signed URL');
+
+      const avatarUrl = signedUrlData.signedUrl;
 
       // Update profile
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: urlWithTimestamp })
+        .update({ avatar_url: avatarUrl })
         .eq('id', userId);
 
       if (updateError) throw updateError;
 
-      setPreviewUrl(urlWithTimestamp);
-      onAvatarChange(urlWithTimestamp);
+      setPreviewUrl(avatarUrl);
+      onAvatarChange(avatarUrl);
       toast.success('Avatar actualizado correctamente');
     } catch (error) {
       console.error('Error uploading avatar:', error);
