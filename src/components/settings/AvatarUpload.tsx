@@ -1,17 +1,19 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, Loader2, User } from 'lucide-react';
+import { Camera, Loader2, User, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 
 interface AvatarUploadProps {
   userId: string;
   currentAvatarUrl: string | null;
-  onAvatarChange: (url: string) => void;
+  onAvatarChange: (url: string | null) => void;
 }
 
 export function AvatarUpload({ userId, currentAvatarUrl, onAvatarChange }: AvatarUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentAvatarUrl);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -73,17 +75,59 @@ export function AvatarUpload({ userId, currentAvatarUrl, onAvatarChange }: Avata
     }
   };
 
+  const handleDelete = async () => {
+    if (!previewUrl) return;
+    
+    setIsDeleting(true);
+    
+    try {
+      // List files in user's folder to find and delete avatar
+      const { data: files, error: listError } = await supabase.storage
+        .from('avatars')
+        .list(userId);
+
+      if (listError) throw listError;
+
+      // Delete all avatar files for this user
+      if (files && files.length > 0) {
+        const filesToDelete = files.map(file => `${userId}/${file.name}`);
+        const { error: deleteError } = await supabase.storage
+          .from('avatars')
+          .remove(filesToDelete);
+
+        if (deleteError) throw deleteError;
+      }
+
+      // Clear avatar_url in profile
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: null })
+        .eq('id', userId);
+
+      if (updateError) throw updateError;
+
+      setPreviewUrl(null);
+      onAvatarChange(null);
+      toast.success('Avatar eliminado correctamente');
+    } catch (error) {
+      console.error('Error deleting avatar:', error);
+      toast.error('Error al eliminar el avatar');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center gap-4">
       <motion.div
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         className="relative cursor-pointer group"
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => !isDeleting && fileInputRef.current?.click()}
       >
         <div className="w-24 h-24 rounded-full overflow-hidden bg-muted border-4 border-primary/20 shadow-lg">
           <AnimatePresence mode="wait">
-            {isUploading ? (
+            {isUploading || isDeleting ? (
               <motion.div
                 key="loading"
                 initial={{ opacity: 0 }}
@@ -135,9 +179,28 @@ export function AvatarUpload({ userId, currentAvatarUrl, onAvatarChange }: Avata
         className="hidden"
       />
 
-      <p className="text-sm text-muted-foreground">
-        Haz clic para cambiar tu avatar
-      </p>
+      <div className="flex flex-col items-center gap-2">
+        <p className="text-sm text-muted-foreground">
+          Haz clic para cambiar tu avatar
+        </p>
+        
+        {previewUrl && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
+            {isDeleting ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Trash2 className="w-4 h-4 mr-2" />
+            )}
+            Eliminar avatar
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
