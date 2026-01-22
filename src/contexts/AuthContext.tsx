@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface Profile {
   id: string;
   display_name: string | null;
+  avatar_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -19,8 +20,10 @@ interface AuthContextType {
   signup: (email: string, password: string, displayName: string) => Promise<{ error: Error | null }>;
   logout: () => Promise<void>;
   updateDisplayName: (displayName: string) => Promise<{ error: Error | null }>;
+  updateAvatarUrl: (avatarUrl: string) => Promise<{ error: Error | null }>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -135,6 +138,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null };
   };
 
+  const updateAvatarUrl = async (avatarUrl: string): Promise<{ error: Error | null }> => {
+    if (!user) {
+      return { error: new Error('No user logged in') };
+    }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ avatar_url: avatarUrl })
+      .eq('id', user.id);
+
+    if (error) {
+      return { error };
+    }
+
+    // Refresh profile data
+    await fetchProfile(user.id);
+    return { error: null };
+  };
+
+  const refreshProfile = async () => {
+    if (user) {
+      await fetchProfile(user.id);
+    }
+  };
+
   const resetPassword = async (email: string): Promise<{ error: Error | null }> => {
     const redirectUrl = `${window.location.origin}/auth/reset-password`;
     
@@ -173,8 +201,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signup,
         logout, 
         updateDisplayName,
+        updateAvatarUrl,
         resetPassword,
         updatePassword,
+        refreshProfile,
       }}
     >
       {children}
