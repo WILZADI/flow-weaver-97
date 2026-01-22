@@ -20,7 +20,8 @@ import { AvatarUpload } from '@/components/settings/AvatarUpload';
 export default function SettingsPage() {
   const { user, profile, logout, updateDisplayName, refreshProfile, isLoading: authLoading } = useAuth();
   const [name, setName] = useState(profile?.display_name || '');
-  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || null);
+  // Use resolved avatar URL for display, but the component stores file paths
+  const [avatarUrl, setAvatarUrl] = useState(profile?.resolvedAvatarUrl || null);
   const [currency, setCurrency] = useState('COP');
   const [notifications, setNotifications] = useState(true);
   const [isSaving, setIsSaving] = useState(false);

@@ -98,9 +98,9 @@ export function Sidebar() {
         )}>
           {/* Avatar */}
           <div className="w-9 h-9 rounded-full overflow-hidden bg-muted border-2 border-primary/20 flex-shrink-0">
-            {profile?.avatar_url ? (
+            {profile?.resolvedAvatarUrl ? (
               <img
-                src={profile.avatar_url}
+                src={profile.resolvedAvatarUrl}
                 alt="Avatar"
                 className="w-full h-full object-cover"
               />
