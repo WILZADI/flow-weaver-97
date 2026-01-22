@@ -15,10 +15,12 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { profileSchema } from '@/lib/validation';
+import { AvatarUpload } from '@/components/settings/AvatarUpload';
 
 export default function SettingsPage() {
-  const { user, profile, logout, updateDisplayName, isLoading: authLoading } = useAuth();
+  const { user, profile, logout, updateDisplayName, refreshProfile, isLoading: authLoading } = useAuth();
   const [name, setName] = useState(profile?.display_name || '');
+  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || null);
   const [currency, setCurrency] = useState('COP');
   const [notifications, setNotifications] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -79,6 +81,20 @@ export default function SettingsPage() {
               </div>
               <h3 className="text-lg font-semibold text-foreground">Perfil</h3>
             </div>
+
+            {/* Avatar Upload */}
+            {user && (
+              <div className="flex justify-center mb-6">
+                <AvatarUpload
+                  userId={user.id}
+                  currentAvatarUrl={avatarUrl}
+                  onAvatarChange={(url) => {
+                    setAvatarUrl(url);
+                    refreshProfile();
+                  }}
+                />
+              </div>
+            )}
 
             <div className="space-y-4">
               <div>
