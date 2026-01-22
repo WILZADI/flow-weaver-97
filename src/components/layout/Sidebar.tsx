@@ -9,7 +9,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Wallet,
-  LogOut
+  LogOut,
+  User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,7 +25,7 @@ const navItems = [
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
-  const { logout, user } = useAuth();
+  const { logout, user, profile } = useAuth();
 
   return (
     <motion.aside
@@ -91,18 +92,40 @@ export function Sidebar() {
 
       {/* User Section */}
       <div className="p-3 border-t border-sidebar-border">
-        <AnimatePresence>
-          {!isCollapsed && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="px-3 py-2 mb-2"
-            >
-              <p className="text-sm text-sidebar-foreground truncate">{user?.email}</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div className={cn(
+          "flex items-center gap-3 px-3 py-2 mb-2",
+          isCollapsed && "justify-center px-0"
+        )}>
+          {/* Avatar */}
+          <div className="w-9 h-9 rounded-full overflow-hidden bg-muted border-2 border-primary/20 flex-shrink-0">
+            {profile?.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt="Avatar"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                <User className="w-4 h-4 text-muted-foreground" />
+              </div>
+            )}
+          </div>
+          <AnimatePresence>
+            {!isCollapsed && (
+              <motion.div
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: 'auto' }}
+                exit={{ opacity: 0, width: 0 }}
+                className="overflow-hidden"
+              >
+                <p className="text-sm font-medium text-foreground truncate">
+                  {profile?.display_name || 'Usuario'}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
         <button
           onClick={logout}
           className="flex items-center gap-3 px-3 py-3 w-full rounded-lg text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
