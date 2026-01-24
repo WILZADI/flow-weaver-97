@@ -15,7 +15,8 @@ import {
   FileSpreadsheet,
   FileText,
   Loader2,
-  CalendarIcon
+  CalendarIcon,
+  Copy
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -90,6 +91,7 @@ import { formatCurrency } from '@/lib/currency';
 import { exportToExcel, exportToPDF } from '@/lib/exportUtils';
 import { transactionSchema } from '@/lib/validation';
 import { useCustomCategories } from '@/hooks/useCustomCategories';
+import { CopyTransactionsModal } from '@/components/transactions/CopyTransactionsModal';
 
 const MONTHS = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -125,6 +127,7 @@ export default function TransactionsPage() {
   const [showAllMonths, setShowAllMonths] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
+  const [copyModalOpen, setCopyModalOpen] = useState(false);
   const [newTransaction, setNewTransaction] = useState({
     type: 'expense' as 'income' | 'expense',
     amount: '',
@@ -317,51 +320,63 @@ export default function TransactionsPage() {
               <p className="text-muted-foreground mt-1">Gestiona tus ingresos y gastos</p>
             </div>
             
-            {/* Export Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                  <Download className="w-4 h-4" />
-                  Exportar
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem 
-                  className="gap-2"
-                  onClick={async () => {
-                    const period = showAllMonths 
-                      ? `${selectedYear}` 
-                      : `${MONTHS[selectedMonth]}_${selectedYear}`;
-                    try {
-                      await exportToExcel(filteredTransactions, `transacciones_${period}`);
-                      toast.success('Archivo Excel generado correctamente');
-                    } catch (error) {
-                      toast.error('Error al generar el archivo Excel');
-                    }
-                  }}
-                >
-                  <FileSpreadsheet className="w-4 h-4 text-green-600" />
-                  Exportar a Excel
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  className="gap-2"
-                  onClick={() => {
-                    const period = showAllMonths 
-                      ? `Año ${selectedYear}` 
-                      : `${MONTHS[selectedMonth]} ${selectedYear}`;
-                    exportToPDF(
-                      filteredTransactions, 
-                      `transacciones_${period.replace(' ', '_')}`,
-                      `Reporte de Transacciones - ${period}`
-                    );
-                    toast.success('Archivo PDF generado correctamente');
-                  }}
-                >
-                  <FileText className="w-4 h-4 text-red-600" />
-                  Exportar a PDF
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex gap-2">
+              {/* Copy Transactions Button */}
+              <Button 
+                variant="outline" 
+                className="gap-2"
+                onClick={() => setCopyModalOpen(true)}
+              >
+                <Copy className="w-4 h-4" />
+                <span className="hidden sm:inline">Copiar Mes</span>
+              </Button>
+
+              {/* Export Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Download className="w-4 h-4" />
+                    <span className="hidden sm:inline">Exportar</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem 
+                    className="gap-2"
+                    onClick={async () => {
+                      const period = showAllMonths 
+                        ? `${selectedYear}` 
+                        : `${MONTHS[selectedMonth]}_${selectedYear}`;
+                      try {
+                        await exportToExcel(filteredTransactions, `transacciones_${period}`);
+                        toast.success('Archivo Excel generado correctamente');
+                      } catch (error) {
+                        toast.error('Error al generar el archivo Excel');
+                      }
+                    }}
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                    Exportar a Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="gap-2"
+                    onClick={() => {
+                      const period = showAllMonths 
+                        ? `Año ${selectedYear}` 
+                        : `${MONTHS[selectedMonth]} ${selectedYear}`;
+                      exportToPDF(
+                        filteredTransactions, 
+                        `transacciones_${period.replace(' ', '_')}`,
+                        `Reporte de Transacciones - ${period}`
+                      );
+                      toast.success('Archivo PDF generado correctamente');
+                    }}
+                  >
+                    <FileText className="w-4 h-4 text-red-600" />
+                    Exportar a PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
 
           {/* Month Year Selector */}
@@ -821,6 +836,12 @@ export default function TransactionsPage() {
           type={addCategoryType}
           onAddCategory={handleAddCategory}
           existingCategories={getAllCategories().map(c => c.name)}
+        />
+
+        {/* Copy Transactions Modal */}
+        <CopyTransactionsModal
+          open={copyModalOpen}
+          onOpenChange={setCopyModalOpen}
         />
       </div>
     </AppLayout>
