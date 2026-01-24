@@ -1,18 +1,16 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Trash2, Loader2, AlertTriangle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Trash2, Loader2, AlertTriangle, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,9 +20,10 @@ import { useNavigate } from 'react-router-dom';
 export function DeleteAccountSection() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [isExpanded, setIsExpanded] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const confirmPhrase = 'ELIMINAR MI CUENTA';
 
@@ -66,7 +65,7 @@ export function DeleteAccountSection() {
       toast.error('Error al eliminar la cuenta. Por favor, intenta de nuevo.');
     } finally {
       setIsDeleting(false);
-      setIsOpen(false);
+      setIsDialogOpen(false);
     }
   };
 
@@ -77,27 +76,57 @@ export function DeleteAccountSection() {
       transition={{ delay: 0.3 }}
       className="kpi-card border-destructive/30"
     >
-      <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 rounded-lg bg-destructive/10">
-          <AlertTriangle className="w-5 h-5 text-destructive" />
+      <button
+        type="button"
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="flex items-center justify-between w-full text-left"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-destructive/10">
+            <AlertTriangle className="w-5 h-5 text-destructive" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-destructive">Zona de Peligro</h3>
+            <p className="text-sm text-muted-foreground">Eliminar cuenta permanentemente</p>
+          </div>
         </div>
-        <h3 className="text-lg font-semibold text-destructive">Zona de Peligro</h3>
-      </div>
+        <motion.div
+          animate={{ rotate: isExpanded ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronDown className="w-5 h-5 text-muted-foreground" />
+        </motion.div>
+      </button>
 
-      <p className="text-sm text-muted-foreground mb-4">
-        Una vez que elimines tu cuenta, no hay vuelta atrás. Por favor, asegúrate de estar seguro.
-      </p>
-
-      <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
-        <AlertDialogTrigger asChild>
-          <Button 
-            variant="outline" 
-            className="w-full h-12 border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="overflow-hidden"
           >
-            <Trash2 className="w-5 h-5 mr-2" />
-            Eliminar Cuenta
-          </Button>
-        </AlertDialogTrigger>
+            <div className="pt-6 space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Una vez que elimines tu cuenta, no hay vuelta atrás. Se borrarán todos tus datos, 
+                transacciones, categorías y configuración de forma permanente.
+              </p>
+
+              <Button 
+                variant="outline" 
+                onClick={() => setIsDialogOpen(true)}
+                className="w-full h-12 border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              >
+                <Trash2 className="w-5 h-5 mr-2" />
+                Eliminar Cuenta
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-destructive">

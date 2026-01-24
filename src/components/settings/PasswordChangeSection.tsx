@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Lock, Loader2, Eye, EyeOff } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Lock, Loader2, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,6 +19,7 @@ const passwordSchema = z.object({
 
 export function PasswordChangeSection() {
   const { updatePassword } = useAuth();
+  const [isExpanded, setIsExpanded] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -50,6 +51,7 @@ export function PasswordChangeSection() {
       toast.success('Contraseña actualizada correctamente');
       setNewPassword('');
       setConfirmPassword('');
+      setIsExpanded(false);
     } finally {
       setIsUpdating(false);
     }
@@ -62,97 +64,124 @@ export function PasswordChangeSection() {
       transition={{ delay: 0.15 }}
       className="kpi-card"
     >
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 rounded-lg bg-primary/10">
-          <Lock className="w-5 h-5 text-primary" />
-        </div>
-        <h3 className="text-lg font-semibold text-foreground">Cambiar Contraseña</h3>
-      </div>
-
-      <div className="space-y-4">
-        <div>
-          <label className="text-sm font-medium text-foreground mb-2 block">
-            Nueva Contraseña
-          </label>
-          <div className="relative">
-            <Input
-              type={showNewPassword ? 'text' : 'password'}
-              value={newPassword}
-              onChange={(e) => {
-                setNewPassword(e.target.value);
-                if (errors.newPassword) setErrors((prev) => ({ ...prev, newPassword: undefined }));
-              }}
-              placeholder="Mínimo 8 caracteres"
-              className="h-12 bg-background pr-12"
-            />
-            <button
-              type="button"
-              onClick={() => setShowNewPassword(!showNewPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-            </button>
+      <button
+        type="button"
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="flex items-center justify-between w-full text-left"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Lock className="w-5 h-5 text-primary" />
           </div>
-          {errors.newPassword && (
-            <motion.p
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-sm text-destructive mt-2"
-            >
-              {errors.newPassword}
-            </motion.p>
-          )}
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-foreground mb-2 block">
-            Confirmar Contraseña
-          </label>
-          <div className="relative">
-            <Input
-              type={showConfirmPassword ? 'text' : 'password'}
-              value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.target.value);
-                if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
-              }}
-              placeholder="Repite la nueva contraseña"
-              className="h-12 bg-background pr-12"
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-            </button>
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">Cambiar Contraseña</h3>
+            <p className="text-sm text-muted-foreground">Actualiza tu contraseña de acceso</p>
           </div>
-          {errors.confirmPassword && (
-            <motion.p
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-sm text-destructive mt-2"
-            >
-              {errors.confirmPassword}
-            </motion.p>
-          )}
         </div>
-
-        <Button
-          onClick={handleUpdatePassword}
-          disabled={isUpdating || !newPassword || !confirmPassword}
-          className="w-full h-12 mt-2"
+        <motion.div
+          animate={{ rotate: isExpanded ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
         >
-          {isUpdating ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin mr-2" />
-              Actualizando...
-            </>
-          ) : (
-            'Actualizar Contraseña'
-          )}
-        </Button>
-      </div>
+          <ChevronDown className="w-5 h-5 text-muted-foreground" />
+        </motion.div>
+      </button>
+
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div className="space-y-4 pt-6">
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  Nueva Contraseña
+                </label>
+                <div className="relative">
+                  <Input
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => {
+                      setNewPassword(e.target.value);
+                      if (errors.newPassword) setErrors((prev) => ({ ...prev, newPassword: undefined }));
+                    }}
+                    placeholder="Mínimo 8 caracteres"
+                    className="h-12 bg-background pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                {errors.newPassword && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-sm text-destructive mt-2"
+                  >
+                    {errors.newPassword}
+                  </motion.p>
+                )}
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  Confirmar Contraseña
+                </label>
+                <div className="relative">
+                  <Input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
+                    }}
+                    placeholder="Repite la nueva contraseña"
+                    className="h-12 bg-background pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                {errors.confirmPassword && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-sm text-destructive mt-2"
+                  >
+                    {errors.confirmPassword}
+                  </motion.p>
+                )}
+              </div>
+
+              <Button
+                onClick={handleUpdatePassword}
+                disabled={isUpdating || !newPassword || !confirmPassword}
+                className="w-full h-12 mt-2"
+              >
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    Actualizando...
+                  </>
+                ) : (
+                  'Actualizar Contraseña'
+                )}
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
