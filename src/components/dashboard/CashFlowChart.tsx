@@ -6,7 +6,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
   Legend,
   Cell,
@@ -23,29 +22,6 @@ interface CashFlowChartProps {
   data: MonthlyData[];
   selectedMonth?: number;
 }
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="glass rounded-lg p-4 border border-border shadow-xl">
-        <p className="text-sm font-semibold text-foreground mb-2">{label}</p>
-        {payload.map((entry: any, index: number) => (
-          <div key={index} className="flex items-center gap-2 text-sm">
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: entry.color }}
-            />
-            <span className="text-muted-foreground">{entry.name}:</span>
-            <span className="font-medium text-foreground">
-              ${entry.value.toLocaleString()}
-            </span>
-          </div>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
 
 export function CashFlowChart({ data, selectedMonth }: CashFlowChartProps) {
   return (
@@ -73,7 +49,7 @@ export function CashFlowChart({ data, selectedMonth }: CashFlowChartProps) {
               tickLine={false}
               tickFormatter={(value) => `$${value / 1000}k`}
             />
-            <Tooltip content={<CustomTooltip />} />
+            
             <Legend
               wrapperStyle={{ paddingTop: '20px' }}
               payload={[

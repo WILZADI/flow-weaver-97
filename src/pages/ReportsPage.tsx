@@ -5,7 +5,6 @@ import {
   Pie,
   Cell,
   ResponsiveContainer,
-  Tooltip,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -46,20 +45,6 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 const YEARS = [2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035];
-
-const CustomTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="glass rounded-lg p-3 border border-border shadow-xl">
-        <p className="text-sm font-semibold text-foreground">{payload[0].name}</p>
-        <p className="text-sm text-muted-foreground">
-          {formatCurrency(payload[0].value)}
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
 
 export default function ReportsPage() {
   const { getFilteredTransactions, getMonthSummary, getYearSummary } = useFinance();
@@ -174,7 +159,7 @@ export default function ReportsPage() {
                               />
                             ))}
                           </Pie>
-                          <Tooltip content={<CustomTooltip />} />
+                          
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -292,18 +277,6 @@ export default function ReportsPage() {
                       tickLine={false}
                       tickFormatter={(value) => `${value}%`}
                       domain={[0, 100]}
-                    />
-                    <Tooltip 
-                      contentStyle={{
-                        backgroundColor: 'hsl(222, 47%, 8%)',
-                        border: '1px solid hsl(217, 33%, 17%)',
-                        borderRadius: '8px',
-                      }}
-                      labelStyle={{ color: 'hsl(210, 40%, 98%)' }}
-                      formatter={(value: number, name: string) => {
-                        if (name === 'Tasa de Ahorro') return [`${value}%`, name];
-                        return [formatCurrency(value), name];
-                      }}
                     />
                     <Legend 
                       wrapperStyle={{ paddingTop: '20px' }}
