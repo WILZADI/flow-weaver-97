@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, DollarSign, Bell, LogOut, Loader2, Palette } from 'lucide-react';
+import { User, DollarSign, LogOut, Loader2, Palette } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -26,7 +25,6 @@ export default function SettingsPage() {
   // Use resolved avatar URL for display, but the component stores file paths
   const [avatarUrl, setAvatarUrl] = useState(profile?.resolvedAvatarUrl || null);
   const [currency, setCurrency] = useState('COP');
-  const [notifications, setNotifications] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -180,32 +178,6 @@ export default function SettingsPage() {
                 <SelectItem value="EUR">Euro (EUR)</SelectItem>
               </SelectContent>
             </Select>
-          </motion.div>
-
-          {/* Notifications Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="kpi-card"
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 rounded-lg bg-balance/10">
-                <Bell className="w-5 h-5 text-balance" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground">Notificaciones</h3>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-foreground">Alertas de pagos pendientes</p>
-                <p className="text-sm text-muted-foreground">Recibe recordatorios sobre tus pagos</p>
-              </div>
-              <Switch
-                checked={notifications}
-                onCheckedChange={setNotifications}
-              />
-            </div>
           </motion.div>
 
           {/* Actions */}
