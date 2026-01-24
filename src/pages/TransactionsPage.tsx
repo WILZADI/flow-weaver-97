@@ -314,11 +314,22 @@ export default function TransactionsPage() {
       <div className="p-6 lg:p-8">
         {/* Header */}
         <div className="flex flex-col gap-4 mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Movimientos</h1>
-              <p className="text-muted-foreground mt-1">Gestiona tus ingresos y gastos</p>
-            </div>
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Movimientos</h1>
+            <p className="text-muted-foreground mt-1">Gestiona tus ingresos y gastos</p>
+          </div>
+
+          {/* Month Year Selector + Actions */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <MonthYearSelector
+              month={selectedMonth}
+              year={selectedYear}
+              onMonthChange={setSelectedMonth}
+              onYearChange={setSelectedYear}
+              showAllOption
+              isAllMonths={showAllMonths}
+              onToggleAllMonths={setShowAllMonths}
+            />
             
             <div className="flex gap-2">
               {/* Copy Transactions Button */}
@@ -354,7 +365,7 @@ export default function TransactionsPage() {
                       }
                     }}
                   >
-                    <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                    <FileSpreadsheet className="w-4 h-4 text-income" />
                     Exportar a Excel
                   </DropdownMenuItem>
                   <DropdownMenuItem 
@@ -371,24 +382,13 @@ export default function TransactionsPage() {
                       toast.success('Archivo PDF generado correctamente');
                     }}
                   >
-                    <FileText className="w-4 h-4 text-red-600" />
+                    <FileText className="w-4 h-4 text-expense" />
                     Exportar a PDF
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
-
-          {/* Month Year Selector */}
-          <MonthYearSelector
-            month={selectedMonth}
-            year={selectedYear}
-            onMonthChange={setSelectedMonth}
-            onYearChange={setSelectedYear}
-            showAllOption
-            isAllMonths={showAllMonths}
-            onToggleAllMonths={setShowAllMonths}
-          />
         </div>
 
         {/* Filters */}
