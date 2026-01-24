@@ -18,6 +18,7 @@ import { profileSchema } from '@/lib/validation';
 import { AvatarUpload } from '@/components/settings/AvatarUpload';
 import { PasswordChangeSection } from '@/components/settings/PasswordChangeSection';
 import { ThemeToggle } from '@/components/settings/ThemeToggle';
+import { DeleteAccountSection } from '@/components/settings/DeleteAccountSection';
 
 export default function SettingsPage() {
   const { user, profile, logout, updateDisplayName, refreshProfile, isLoading: authLoading } = useAuth();
@@ -232,6 +233,9 @@ export default function SettingsPage() {
               Cerrar Sesión
             </Button>
           </div>
+
+          {/* Delete Account Section - Danger Zone */}
+          <DeleteAccountSection />
         </div>
       </div>
     </AppLayout>
