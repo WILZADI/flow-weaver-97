@@ -73,7 +73,7 @@ export default function DashboardPage() {
 
   const { getAllCategories, addCategory, deleteCategory, customCategories } = useCustomCategories();
   
-  const [showAllMonths, setShowAllMonths] = useState(false);
+  
   const [showLinkedIncomesModal, setShowLinkedIncomesModal] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [addCategoryModalOpen, setAddCategoryModalOpen] = useState(false);
@@ -89,9 +89,7 @@ export default function DashboardPage() {
     isPending: false,
   });
   
-  const summary = showAllMonths 
-    ? getYearSummary(selectedYear) 
-    : getMonthSummary(selectedMonth, selectedYear);
+  const summary = getMonthSummary(selectedMonth, selectedYear);
 
   const openAddCategoryModal = (type: 'income' | 'expense') => {
     setAddCategoryType(type);
@@ -158,15 +156,11 @@ export default function DashboardPage() {
   });
 
   // Get pending transactions for current filter
-  const pendingTransactions = showAllMonths
-    ? getFilteredTransactions(undefined, selectedYear).filter(t => t.isPending)
-    : getFilteredTransactions(selectedMonth, selectedYear).filter(t => t.isPending);
+  const pendingTransactions = getFilteredTransactions(selectedMonth, selectedYear).filter(t => t.isPending);
 
   // Get linked incomes information with remaining balance and expense details
   const linkedIncomesInfo = useMemo(() => {
-    const filteredTransactions = showAllMonths
-      ? getFilteredTransactions(undefined, selectedYear)
-      : getFilteredTransactions(selectedMonth, selectedYear);
+    const filteredTransactions = getFilteredTransactions(selectedMonth, selectedYear);
     
     // Calculate expenses per linked income and collect expense details
     const expensesByIncome = new Map<string, number>();
@@ -201,7 +195,7 @@ export default function DashboardPage() {
       totalRemainingBalance,
       count: linkedIncomes.length,
     };
-  }, [transactions, showAllMonths, selectedMonth, selectedYear, getFilteredTransactions]);
+  }, [transactions, selectedMonth, selectedYear, getFilteredTransactions]);
 
   return (
     <AppLayout>
@@ -210,12 +204,10 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
-              Dashboard - {showAllMonths ? `Año ${selectedYear}` : MONTHS[selectedMonth]}
+              Dashboard - {MONTHS[selectedMonth]}
             </h1>
             <p className="text-muted-foreground mt-1">
-              {showAllMonths 
-                ? `Resumen anual ${selectedYear}` 
-                : `Vista de ${MONTHS[selectedMonth]} ${selectedYear}`}
+              Vista de {MONTHS[selectedMonth]} {selectedYear}
             </p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
@@ -224,9 +216,6 @@ export default function DashboardPage() {
               year={selectedYear}
               onMonthChange={setSelectedMonth}
               onYearChange={setSelectedYear}
-              showAllOption
-              isAllMonths={showAllMonths}
-              onToggleAllMonths={setShowAllMonths}
             />
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
@@ -436,7 +425,7 @@ export default function DashboardPage() {
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <CashFlowChart data={monthlyChartData} selectedMonth={showAllMonths ? undefined : selectedMonth} />
+            <CashFlowChart data={monthlyChartData} selectedMonth={selectedMonth} />
           </div>
           <PendingCard transactions={pendingTransactions} />
         </div>
