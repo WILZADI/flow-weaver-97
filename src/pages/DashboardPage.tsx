@@ -13,7 +13,7 @@ import { formatCurrency } from '@/lib/currency';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
   DialogContent,
@@ -333,20 +333,21 @@ export default function DashboardPage() {
                   </div>
 
                   {newTransaction.type === 'expense' && (
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="dashboardIsPending"
-                        checked={newTransaction.isPending}
-                        onCheckedChange={(checked) => 
-                          setNewTransaction(prev => ({ ...prev, isPending: checked === true }))
-                        }
-                      />
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-background/50">
                       <label
                         htmlFor="dashboardIsPending"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        className="text-sm font-medium leading-none cursor-pointer"
                       >
                         Marcar como pendiente
                       </label>
+                      <Switch
+                        id="dashboardIsPending"
+                        checked={newTransaction.isPending}
+                        onCheckedChange={(checked) => 
+                          setNewTransaction(prev => ({ ...prev, isPending: checked }))
+                        }
+                        className="data-[state=checked]:bg-pending"
+                      />
                     </div>
                   )}
 
