@@ -317,186 +317,51 @@ export default function TransactionsPage() {
               <p className="text-muted-foreground mt-1">Gestiona tus ingresos y gastos</p>
             </div>
             
-            <div className="flex items-center gap-2">
-              {/* Export Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-2">
-                    <Download className="w-4 h-4" />
-                    Exportar
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem 
-                    className="gap-2"
-                    onClick={async () => {
-                      const period = showAllMonths 
-                        ? `${selectedYear}` 
-                        : `${MONTHS[selectedMonth]}_${selectedYear}`;
-                      try {
-                        await exportToExcel(filteredTransactions, `transacciones_${period}`);
-                        toast.success('Archivo Excel generado correctamente');
-                      } catch (error) {
-                        toast.error('Error al generar el archivo Excel');
-                      }
-                    }}
-                  >
-                    <FileSpreadsheet className="w-4 h-4 text-green-600" />
-                    Exportar a Excel
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="gap-2"
-                    onClick={() => {
-                      const period = showAllMonths 
-                        ? `Año ${selectedYear}` 
-                        : `${MONTHS[selectedMonth]} ${selectedYear}`;
-                      exportToPDF(
-                        filteredTransactions, 
-                        `transacciones_${period.replace(' ', '_')}`,
-                        `Reporte de Transacciones - ${period}`
-                      );
-                      toast.success('Archivo PDF generado correctamente');
-                    }}
-                  >
-                    <FileText className="w-4 h-4 text-red-600" />
-                    Exportar a PDF
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {/* New Transaction Button */}
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="gap-2 bg-primary hover:bg-primary/90">
-                    <Plus className="w-5 h-5" />
-                    Nueva Transacción
-                  </Button>
-                </DialogTrigger>
-              <DialogContent className="sm:max-w-md bg-card border-border">
-                <DialogHeader>
-                  <DialogTitle>Nueva Transacción</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 mt-4">
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant={newTransaction.type === 'income' ? 'default' : 'outline'}
-                      className={cn(
-                        "flex-1",
-                        newTransaction.type === 'income' && "bg-income hover:bg-income/90"
-                      )}
-                      onClick={() => setNewTransaction(prev => ({ ...prev, type: 'income', category: '', isPending: false }))}
-                    >
-                      <TrendingUp className="w-4 h-4 mr-2" />
-                      Ingreso
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={newTransaction.type === 'expense' ? 'default' : 'outline'}
-                      className={cn(
-                        "flex-1",
-                        newTransaction.type === 'expense' && "bg-expense hover:bg-expense/90"
-                      )}
-                      onClick={() => setNewTransaction(prev => ({ ...prev, type: 'expense', category: '' }))}
-                    >
-                      <TrendingDown className="w-4 h-4 mr-2" />
-                      Gasto
-                    </Button>
-                  </div>
-
-                  <div>
-                    <label className="text-sm text-muted-foreground mb-1 block">Fecha</label>
-                    <Popover open={isNewDatePickerOpen} onOpenChange={setIsNewDatePickerOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full h-12 justify-start text-left font-normal",
-                            !newTransaction.date && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {newTransaction.date ? (
-                            format(parseDateString(newTransaction.date), "PPP", { locale: es })
-                          ) : (
-                            <span>Seleccionar fecha</span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          locale={es}
-                          selected={newTransaction.date ? parseDateString(newTransaction.date) : undefined}
-                          onSelect={(date) => {
-                            if (date) {
-                              setNewTransaction(prev => ({ ...prev, date: formatDateToString(date) }));
-                              setIsNewDatePickerOpen(false);
-                            }
-                          }}
-                          initialFocus
-                          className="p-3 pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  <CategorySelector
-                    value={newTransaction.category}
-                    onChange={(value) => setNewTransaction(prev => ({ ...prev, category: value }))}
-                    type={newTransaction.type}
-                    allCategories={getAllCategories()}
-                    customCategories={customCategories}
-                    onAddCategory={() => openAddCategoryModal(newTransaction.type)}
-                    onDeleteCategory={deleteCategory}
-                  />
-
-                  <Input
-                    placeholder="Descripción"
-                    value={newTransaction.description}
-                    onChange={(e) => setNewTransaction(prev => ({ ...prev, description: e.target.value }))}
-                    className="h-12"
-                  />
-
-                  <div>
-                    <label className="text-sm text-muted-foreground mb-1 block">Monto (COP)</label>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      value={newTransaction.amount}
-                      onChange={(e) => setNewTransaction(prev => ({ ...prev, amount: e.target.value }))}
-                      className="h-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    />
-                  </div>
-
-                  {newTransaction.type === 'expense' && (
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="isPending"
-                        checked={newTransaction.isPending}
-                        onCheckedChange={(checked) => 
-                          setNewTransaction(prev => ({ ...prev, isPending: checked === true }))
-                        }
-                      />
-                      <label
-                        htmlFor="isPending"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        Marcar como pendiente
-                      </label>
-                    </div>
-                  )}
-
-                  <Button
-                    onClick={handleAddTransaction}
-                    className="w-full h-12 bg-primary hover:bg-primary/90"
-                  >
-                    Guardar Transacción
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-            </div>
+            {/* Export Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Download className="w-4 h-4" />
+                  Exportar
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem 
+                  className="gap-2"
+                  onClick={async () => {
+                    const period = showAllMonths 
+                      ? `${selectedYear}` 
+                      : `${MONTHS[selectedMonth]}_${selectedYear}`;
+                    try {
+                      await exportToExcel(filteredTransactions, `transacciones_${period}`);
+                      toast.success('Archivo Excel generado correctamente');
+                    } catch (error) {
+                      toast.error('Error al generar el archivo Excel');
+                    }
+                  }}
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                  Exportar a Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="gap-2"
+                  onClick={() => {
+                    const period = showAllMonths 
+                      ? `Año ${selectedYear}` 
+                      : `${MONTHS[selectedMonth]} ${selectedYear}`;
+                    exportToPDF(
+                      filteredTransactions, 
+                      `transacciones_${period.replace(' ', '_')}`,
+                      `Reporte de Transacciones - ${period}`
+                    );
+                    toast.success('Archivo PDF generado correctamente');
+                  }}
+                >
+                  <FileText className="w-4 h-4 text-red-600" />
+                  Exportar a PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Month Year Selector */}

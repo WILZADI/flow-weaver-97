@@ -67,7 +67,7 @@ export function MonthYearSelector({
       )}
       
       {!isAllMonths && (
-        <>
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
@@ -111,7 +111,7 @@ export function MonthYearSelector({
           >
             <ChevronRight className="w-4 h-4" />
           </Button>
-        </>
+        </div>
       )}
 
       {isAllMonths && (
