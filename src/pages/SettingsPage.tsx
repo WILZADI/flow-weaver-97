@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, DollarSign, Bell, LogOut, Loader2 } from 'lucide-react';
+import { User, DollarSign, Bell, LogOut, Loader2, Palette } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,8 @@ import {
 import { toast } from 'sonner';
 import { profileSchema } from '@/lib/validation';
 import { AvatarUpload } from '@/components/settings/AvatarUpload';
+import { PasswordChangeSection } from '@/components/settings/PasswordChangeSection';
+import { ThemeToggle } from '@/components/settings/ThemeToggle';
 
 export default function SettingsPage() {
   const { user, profile, logout, updateDisplayName, refreshProfile, isLoading: authLoading } = useAuth();
@@ -133,11 +135,30 @@ export default function SettingsPage() {
             </div>
           </motion.div>
 
+          {/* Password Change Section */}
+          <PasswordChangeSection />
+
+          {/* Theme Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="kpi-card"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Palette className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground">Apariencia</h3>
+            </div>
+            <ThemeToggle />
+          </motion.div>
+
           {/* Currency Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.2 }}
             className="kpi-card"
           >
             <div className="flex items-center gap-3 mb-6">
@@ -164,7 +185,7 @@ export default function SettingsPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.25 }}
             className="kpi-card"
           >
             <div className="flex items-center gap-3 mb-6">

@@ -76,8 +76,74 @@
     --shadow-card: 0 4px 24px hsl(222 47% 4% / 0.5);
   }
 
+  .light {
+    /* Light theme */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 98%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 263 70% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 220 14% 92%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 263 70% 50%;
+
+    /* Semantic Finance Colors - Light mode */
+    --income: 142 76% 36%;
+    --income-foreground: 142 76% 15%;
+    --expense: 0 72% 51%;
+    --expense-foreground: 0 72% 15%;
+    --balance: 217 91% 60%;
+    --balance-foreground: 217 91% 15%;
+    --pending: 25 95% 53%;
+    --pending-foreground: 25 95% 15%;
+
+    /* Sidebar - Light */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 220 9% 46%;
+    --sidebar-primary: 263 70% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 263 70% 50%;
+
+    /* Gradients - Light */
+    --gradient-primary: linear-gradient(135deg, hsl(263 70% 50%) 0%, hsl(280 80% 60%) 100%);
+    --gradient-income: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(160 60% 45%) 100%);
+    --gradient-expense: linear-gradient(135deg, hsl(0 72% 51%) 0%, hsl(15 80% 55%) 100%);
+    --gradient-balance: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(200 90% 55%) 100%);
+    --gradient-pending: linear-gradient(135deg, hsl(25 95% 53%) 0%, hsl(40 90% 55%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(220 14% 98%) 100%);
+
+    /* Shadows - Light */
+    --shadow-glow-primary: 0 0 40px hsl(263 70% 50% / 0.15);
+    --shadow-glow-income: 0 0 30px hsl(142 76% 36% / 0.15);
+    --shadow-glow-expense: 0 0 30px hsl(0 72% 51% / 0.15);
+    --shadow-glow-pending: 0 0 30px hsl(25 95% 53% / 0.15);
+    --shadow-card: 0 4px 24px hsl(220 14% 4% / 0.08);
+  }
+
   .dark {
-    /* Already dark by default */
+    /* Already dark by default - inherits from :root */
   }
 }
 
