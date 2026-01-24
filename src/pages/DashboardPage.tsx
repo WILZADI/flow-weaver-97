@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react';
-import { TrendingUp, TrendingDown, Wallet, Clock, Link2, ChevronRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, Clock, Link2, ChevronRight, Plus, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { CashFlowChart } from '@/components/dashboard/CashFlowChart';
@@ -9,6 +11,27 @@ import { LinkedIncomesDetailModal } from '@/components/dashboard/LinkedIncomesDe
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/currency';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { toast } from 'sonner';
+import { CategorySelector } from '@/components/transactions/CategorySelector';
+import { AddCategoryModal } from '@/components/transactions/AddCategoryModal';
+import { useCustomCategories } from '@/hooks/useCustomCategories';
+import { transactionSchema } from '@/lib/validation';
 
 const MONTHS = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -20,6 +43,21 @@ const MONTHS_SHORT = [
   'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
 ];
 
+// Helper functions for date handling
+const parseDateString = (dateStr: string): Date => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const formatDateToString = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getTodayString = (): string => formatDateToString(new Date());
+
 export default function DashboardPage() {
   const { 
     transactions,
@@ -29,14 +67,84 @@ export default function DashboardPage() {
     setSelectedYear,
     getMonthSummary,
     getYearSummary,
-    getFilteredTransactions 
+    getFilteredTransactions,
+    addTransaction,
   } = useFinance();
+
+  const { getAllCategories, addCategory, deleteCategory, customCategories } = useCustomCategories();
   
   const [showAllMonths, setShowAllMonths] = useState(false);
   const [showLinkedIncomesModal, setShowLinkedIncomesModal] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [addCategoryModalOpen, setAddCategoryModalOpen] = useState(false);
+  const [addCategoryType, setAddCategoryType] = useState<'income' | 'expense'>('expense');
+  const [isNewDatePickerOpen, setIsNewDatePickerOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [newTransaction, setNewTransaction] = useState({
+    type: 'expense' as 'income' | 'expense',
+    amount: '',
+    description: '',
+    category: '',
+    date: getTodayString(),
+    isPending: false,
+  });
+  
   const summary = showAllMonths 
     ? getYearSummary(selectedYear) 
     : getMonthSummary(selectedMonth, selectedYear);
+
+  const openAddCategoryModal = (type: 'income' | 'expense') => {
+    setAddCategoryType(type);
+    setAddCategoryModalOpen(true);
+  };
+
+  const handleAddCategory = async (name: string, type: 'income' | 'expense', icon: string) => {
+    return await addCategory(name, type, icon);
+  };
+
+  const handleAddTransaction = async () => {
+    const amount = parseFloat(newTransaction.amount);
+    const validation = transactionSchema.safeParse({
+      type: newTransaction.type,
+      amount: isNaN(amount) ? undefined : amount,
+      description: newTransaction.description,
+      category: newTransaction.category,
+      date: newTransaction.date,
+      isPending: newTransaction.isPending,
+    });
+
+    if (!validation.success) {
+      toast.error(validation.error.errors[0].message);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await addTransaction({
+        type: validation.data.type,
+        amount: validation.data.amount,
+        description: validation.data.description,
+        category: validation.data.category,
+        date: validation.data.date,
+        isPending: validation.data.isPending,
+      });
+
+      setIsDialogOpen(false);
+      setNewTransaction({
+        type: 'expense',
+        amount: '',
+        description: '',
+        category: '',
+        date: getTodayString(),
+        isPending: false,
+      });
+      toast.success('Transacción agregada correctamente');
+    } catch (error) {
+      toast.error('Error al agregar la transacción');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Generate monthly data for the chart based on selected year
   const monthlyChartData = MONTHS_SHORT.map((month, index) => {
@@ -110,15 +218,149 @@ export default function DashboardPage() {
                 : `Vista de ${MONTHS[selectedMonth]} ${selectedYear}`}
             </p>
           </div>
-          <MonthYearSelector
-            month={selectedMonth}
-            year={selectedYear}
-            onMonthChange={setSelectedMonth}
-            onYearChange={setSelectedYear}
-            showAllOption
-            isAllMonths={showAllMonths}
-            onToggleAllMonths={setShowAllMonths}
-          />
+          <div className="flex items-center gap-3 flex-wrap">
+            <MonthYearSelector
+              month={selectedMonth}
+              year={selectedYear}
+              onMonthChange={setSelectedMonth}
+              onYearChange={setSelectedYear}
+              showAllOption
+              isAllMonths={showAllMonths}
+              onToggleAllMonths={setShowAllMonths}
+            />
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2 bg-primary hover:bg-primary/90">
+                  <Plus className="w-5 h-5" />
+                  Nueva Transacción
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md bg-card border-border">
+                <DialogHeader>
+                  <DialogTitle>Nueva Transacción</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 mt-4">
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={newTransaction.type === 'income' ? 'default' : 'outline'}
+                      className={cn(
+                        "flex-1",
+                        newTransaction.type === 'income' && "bg-income hover:bg-income/90"
+                      )}
+                      onClick={() => setNewTransaction(prev => ({ ...prev, type: 'income', category: '', isPending: false }))}
+                    >
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      Ingreso
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={newTransaction.type === 'expense' ? 'default' : 'outline'}
+                      className={cn(
+                        "flex-1",
+                        newTransaction.type === 'expense' && "bg-expense hover:bg-expense/90"
+                      )}
+                      onClick={() => setNewTransaction(prev => ({ ...prev, type: 'expense', category: '' }))}
+                    >
+                      <TrendingDown className="w-4 h-4 mr-2" />
+                      Gasto
+                    </Button>
+                  </div>
+
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-1 block">Fecha</label>
+                    <Popover open={isNewDatePickerOpen} onOpenChange={setIsNewDatePickerOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full h-12 justify-start text-left font-normal",
+                            !newTransaction.date && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {newTransaction.date ? (
+                            format(parseDateString(newTransaction.date), "PPP", { locale: es })
+                          ) : (
+                            <span>Seleccionar fecha</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          locale={es}
+                          selected={newTransaction.date ? parseDateString(newTransaction.date) : undefined}
+                          onSelect={(date) => {
+                            if (date) {
+                              setNewTransaction(prev => ({ ...prev, date: formatDateToString(date) }));
+                              setIsNewDatePickerOpen(false);
+                            }
+                          }}
+                          initialFocus
+                          className="p-3 pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <CategorySelector
+                    value={newTransaction.category}
+                    onChange={(value) => setNewTransaction(prev => ({ ...prev, category: value }))}
+                    type={newTransaction.type}
+                    allCategories={getAllCategories()}
+                    customCategories={customCategories}
+                    onAddCategory={() => openAddCategoryModal(newTransaction.type)}
+                    onDeleteCategory={deleteCategory}
+                  />
+
+                  <Input
+                    placeholder="Descripción"
+                    value={newTransaction.description}
+                    onChange={(e) => setNewTransaction(prev => ({ ...prev, description: e.target.value }))}
+                    className="h-12"
+                  />
+
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-1 block">Monto (COP)</label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={newTransaction.amount}
+                      onChange={(e) => setNewTransaction(prev => ({ ...prev, amount: e.target.value }))}
+                      className="h-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                  </div>
+
+                  {newTransaction.type === 'expense' && (
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="dashboardIsPending"
+                        checked={newTransaction.isPending}
+                        onCheckedChange={(checked) => 
+                          setNewTransaction(prev => ({ ...prev, isPending: checked === true }))
+                        }
+                      />
+                      <label
+                        htmlFor="dashboardIsPending"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Marcar como pendiente
+                      </label>
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={handleAddTransaction}
+                    disabled={isSaving}
+                    className="w-full h-12 bg-primary hover:bg-primary/90"
+                  >
+                    {isSaving ? 'Guardando...' : 'Guardar Transacción'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {/* KPI Cards */}
@@ -205,6 +447,15 @@ export default function DashboardPage() {
         onOpenChange={setShowLinkedIncomesModal}
         incomes={linkedIncomesInfo.incomes}
         totalRemainingBalance={linkedIncomesInfo.totalRemainingBalance}
+      />
+
+      {/* Add Category Modal */}
+      <AddCategoryModal
+        open={addCategoryModalOpen}
+        onOpenChange={setAddCategoryModalOpen}
+        onAddCategory={handleAddCategory}
+        type={addCategoryType}
+        existingCategories={getAllCategories().map(c => c.name)}
       />
     </AppLayout>
   );

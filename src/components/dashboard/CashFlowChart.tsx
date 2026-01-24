@@ -62,9 +62,10 @@ export function CashFlowChart({ data, selectedMonth }: CashFlowChartProps) {
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(217, 33%, 17%)" vertical={false} />
             <XAxis 
               dataKey="month" 
-              tick={{ fill: 'hsl(215, 20%, 55%)', fontSize: 12 }}
+              tick={{ fill: 'hsl(215, 20%, 55%)', fontSize: 11 }}
               axisLine={{ stroke: 'hsl(217, 33%, 17%)' }}
               tickLine={false}
+              interval={0}
             />
             <YAxis 
               tick={{ fill: 'hsl(215, 20%, 55%)', fontSize: 12 }}
@@ -75,13 +76,13 @@ export function CashFlowChart({ data, selectedMonth }: CashFlowChartProps) {
             <Tooltip content={<CustomTooltip />} />
             <Legend
               wrapperStyle={{ paddingTop: '20px' }}
-              formatter={(value) => {
-                const colorMap: Record<string, string> = {
-                  'Ingresos': 'hsl(142, 76%, 36%)',
-                  'Gastos': 'hsl(0, 72%, 51%)',
-                  'Balance': 'hsl(217, 91%, 60%)',
-                };
-                return <span style={{ color: colorMap[value] || 'hsl(215, 20%, 55%)', fontWeight: 500 }}>{value}</span>;
+              payload={[
+                { value: 'Ingresos', type: 'square', color: 'hsl(142, 76%, 36%)' },
+                { value: 'Gastos', type: 'square', color: 'hsl(0, 72%, 51%)' },
+                { value: 'Balance', type: 'line', color: 'hsl(217, 91%, 60%)' },
+              ]}
+              formatter={(value, entry) => {
+                return <span style={{ color: entry.color, fontWeight: 500 }}>{value}</span>;
               }}
             />
             <Bar 
